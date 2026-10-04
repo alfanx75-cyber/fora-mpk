@@ -1,0 +1,6 @@
+{
+  "name": "FORA — Platform Aspirasi MPK",
+  "description": "Platform aspirasi digital interaktif Majelis Perwakilan Kelas (MPK). Suaramu bukan cuma masuk form, suaramu bergerak.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
