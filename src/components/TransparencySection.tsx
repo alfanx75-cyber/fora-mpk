@@ -29,7 +29,7 @@ export const TransparencySection: React.FC = () => {
                 DIDENGAR
               </h3>
               <p className="font-['Plus_Jakarta_Sans'] text-xs sm:text-sm text-[#111111]/80 font-medium leading-relaxed">
-                Setiap aspirasi masuk dan dicatat. Otomatis menerima tiket unik tracking publik dan diverifikasi oleh Komisi I Aspirasi.
+                Setiap aspirasi masuk dan dicatat. Otomatis menerima tiket unik tracking publik dan diverifikasi oleh Komisi 3 (KOASITER).
               </p>
             </div>
             <div className="mt-4 sm:mt-6 pt-3 border-t-[2px] border-dashed border-[#111111] flex items-center justify-between font-['Space_Grotesk'] text-[10px] sm:text-[11px] font-extrabold uppercase">

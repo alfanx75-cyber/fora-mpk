@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useAspirations } from '../context/AspirationContext';
 import { AspirationCard } from '../components/AspirationCard';
+import { CategoryIcon } from '../components/CategoryIcon';
 import { CATEGORIES, STATUS_MAP } from '../data/mockData';
+import { Search, FolderKanban } from 'lucide-react';
 
 export const AspirasiFeedPage: React.FC = () => {
   const { aspirations, navigate } = useAspirations();
@@ -50,8 +52,9 @@ export const AspirasiFeedPage: React.FC = () => {
       {/* Top Banner */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 sm:mb-10 pb-5 sm:pb-6 border-b-[2px] sm:border-b-[3px] border-[#111111]">
         <div>
-          <div className="inline-block px-3 py-1 bg-[#fde029] border-[2px] border-[#111111] rounded-lg font-['Space_Grotesk'] text-[10px] sm:text-xs uppercase font-black shadow-[2px_2px_0px_#111111] mb-2">
-            🗳️ ARSIP SUARA & TRANSPARANSI
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#fde029] border-[2px] border-[#111111] rounded-lg font-['Space_Grotesk'] text-[10px] sm:text-xs uppercase font-black shadow-[2px_2px_0px_#111111] mb-2">
+            <FolderKanban className="w-3.5 h-3.5 text-[#111111]" />
+            <span>ARSIP SUARA & TRANSPARANSI</span>
           </div>
           <h1 className="font-['Space_Grotesk'] text-3xl sm:text-5xl md:text-6xl font-black text-[#111111] uppercase tracking-tight">
             SUARA ASPIRASI SISWA
@@ -114,13 +117,14 @@ export const AspirasiFeedPage: React.FC = () => {
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`btn-brutal px-3 sm:px-3.5 py-1.5 sm:py-2 border-[2px] border-[#111111] rounded-xl font-['Space_Grotesk'] text-[11px] sm:text-xs uppercase tracking-wider font-extrabold whitespace-nowrap cursor-pointer transition-all min-h-[36px] ${
+                className={`btn-brutal inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 border-[2px] border-[#111111] rounded-xl font-['Space_Grotesk'] text-[11px] sm:text-xs uppercase tracking-wider font-extrabold whitespace-nowrap cursor-pointer transition-all min-h-[36px] ${
                   selectedCategory === cat.id
                     ? 'bg-[#111111] text-white shadow-[2px_2px_0px_#e01376]'
                     : 'bg-[#FCFBF5] text-[#111111] shadow-[2px_2px_0px_#111111] hover:bg-[#f0edec]'
                 }`}
               >
-                {cat.icon} {cat.name}
+                <CategoryIcon category={cat.id} className="w-3.5 h-3.5" />
+                <span>{cat.name}</span>
               </button>
             ))}
           </div>
@@ -168,9 +172,9 @@ export const AspirasiFeedPage: React.FC = () => {
               onChange={e => setSortBy(e.target.value as 'popular' | 'latest' | 'oldest')}
               className="bg-[#FCFBF5] border-[2px] border-[#111111] rounded-xl px-2.5 sm:px-3 py-1.5 font-['Space_Grotesk'] text-[11px] sm:text-xs font-extrabold uppercase focus:outline-none shadow-[2px_2px_0px_#111111]"
             >
-              <option value="popular">🔥 Terpopuler</option>
-              <option value="latest">⏱️ Terbaru</option>
-              <option value="oldest">📅 Terlama</option>
+              <option value="popular">Terpopuler</option>
+              <option value="latest">Terbaru</option>
+              <option value="oldest">Terlama</option>
             </select>
           </div>
         </div>
@@ -195,7 +199,7 @@ export const AspirasiFeedPage: React.FC = () => {
         )}
       </div>
 
-      {/* Aspirations Grid or Empty State */}
+      {/* Aspirations Grid or Clean Empty State */}
       {sorted.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 md:gap-8">
           {sorted.map((asp, idx) => {
@@ -212,14 +216,14 @@ export const AspirasiFeedPage: React.FC = () => {
       ) : (
         /* Empty State */
         <div className="bg-[#FFFFFF] border-[2.5px] sm:border-[3px] border-[#111111] rounded-3xl p-8 sm:p-12 text-center shadow-[6px_6px_0px_#111111] sm:shadow-[8px_8px_0px_#111111] max-w-xl mx-auto my-8 sm:my-12">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#ffd9e1] border-[2px] sm:border-[3px] border-[#111111] flex items-center justify-center text-2xl sm:text-3xl mx-auto mb-3 sm:mb-4 shadow-[3px_3px_0px_#111111]">
-            🔍
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#ffd9e1] border-[2px] sm:border-[3px] border-[#111111] flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-[3px_3px_0px_#111111]">
+            <Search className="w-6 h-6 text-[#111111]" />
           </div>
           <h3 className="font-['Space_Grotesk'] text-xl sm:text-2xl font-black text-[#111111] uppercase mb-2">
-            BELUM ADA SUARA DI SINI.
+            BELUM ADA ASPIRASI
           </h3>
           <p className="font-['Plus_Jakarta_Sans'] text-xs sm:text-sm text-[#111111]/80 font-medium mb-6">
-            Tidak ditemukan aspirasi yang cocok dengan pencarianmu. Jadilah yang pertama bikin perubahan!
+            Belum ada aspirasi yang cocok dengan filter ini. Jadilah yang pertama mengirimkan suaramu!
           </p>
           <button
             onClick={() => navigate('/kirim')}

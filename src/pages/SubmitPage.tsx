@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useAspirations } from '../context/AspirationContext';
 import { CATEGORIES } from '../data/mockData';
 import { AspirationCategory } from '../types';
+import { CategoryIcon } from '../components/CategoryIcon';
+import { CheckCircle2, Paperclip, FileText, Send, Loader2, ShieldCheck } from 'lucide-react';
 
 export const SubmitPage: React.FC = () => {
   const { addAspiration, navigate } = useAspirations();
@@ -60,15 +62,15 @@ export const SubmitPage: React.FC = () => {
   const validate = () => {
     const errs: { title?: string; description?: string } = {};
     if (!title.trim()) {
-      errs.title = 'Judulnya belum diisi 👀';
+      errs.title = 'Judul aspirasi wajib diisi';
     } else if (title.trim().length < 5) {
-      errs.title = 'Tulis judul sedikit lebih spesifik ya! (minimal 5 karakter)';
+      errs.title = 'Tulis judul sedikit lebih spesifik (minimal 5 karakter)';
     }
 
     if (!description.trim()) {
-      errs.description = 'Ceritakan detail aspirasimu agar MPK paham konteksnya ✍️';
+      errs.description = 'Ceritakan detail aspirasi agar komisi MPK memahami konteksnya';
     } else if (description.trim().length < 15) {
-      errs.description = 'Deskripsi masih terlalu singkat, jelaskan lokasinya atau usulan solusinya ya!';
+      errs.description = 'Deskripsi masih terlalu singkat, jelaskan lokasi atau usulan solusinya';
     }
 
     setErrors(errs);
@@ -95,7 +97,7 @@ export const SubmitPage: React.FC = () => {
 
       setIsSubmitting(false);
       setSuccessTicketId(newAsp.id);
-    }, 1200);
+    }, 1000);
   };
 
   const resetForm = () => {
@@ -114,24 +116,16 @@ export const SubmitPage: React.FC = () => {
       {successTicketId && (
         <div className="fixed inset-0 z-[120] bg-black/65 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-[#FFFFFF] border-[3px] sm:border-[4px] border-[#111111] rounded-3xl p-5 sm:p-8 max-w-md md:max-w-lg w-full text-center shadow-[6px_6px_0px_#111111] sm:shadow-[10px_10px_0px_#111111] animate-[popModal_0.3s_ease-out_forwards] relative overflow-hidden mx-auto my-auto max-h-[92vh] overflow-y-auto">
-            {/* Playful Stickers */}
-            <div className="animate-float-slow absolute top-3 left-3 text-xl sm:text-2xl select-none" style={{ '--rot': '-12deg' } as React.CSSProperties}>
-              ⭐
-            </div>
-            <div className="animate-float-mid absolute top-4 right-4 text-xl sm:text-2xl select-none" style={{ '--rot': '15deg' } as React.CSSProperties}>
-              🎉
-            </div>
-
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#21D99A] border-[3px] border-[#111111] flex items-center justify-center text-3xl sm:text-4xl mx-auto mb-4 sm:mb-5 shadow-[3px_3px_0px_#111111]">
-              🚀
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#21D99A] border-[3px] border-[#111111] flex items-center justify-center text-[#111111] mx-auto mb-4 sm:mb-5 shadow-[3px_3px_0px_#111111]">
+              <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10" />
             </div>
 
             <h2 className="font-['Space_Grotesk'] text-2xl sm:text-3xl md:text-4xl font-black text-[#111111] uppercase tracking-tight mb-2">
-              SUDAH MENDARAT! 🚀
+              ASPIRASI BERHASIL DIKIRIM
             </h2>
 
             <p className="font-['Plus_Jakarta_Sans'] text-xs sm:text-base text-[#111111] font-semibold mb-4 sm:mb-6">
-              Aspirasimu sudah diterima MPK dan siap dikawal transparan.
+              Aspirasimu sudah diterima MPK SMANSA dan siap dikawal secara transparan.
             </p>
 
             {/* Ticket Tag Box */}
@@ -168,21 +162,20 @@ export const SubmitPage: React.FC = () => {
       {/* Page Header */}
       <div className="text-center max-w-xl mx-auto mb-8 sm:mb-10">
         <div className="inline-block px-3.5 py-1.5 bg-[#fde029] border-[2px] border-[#111111] rounded-full font-['Space_Grotesk'] text-[10px] sm:text-xs uppercase font-black shadow-[2px_2px_0px_#111111] mb-2 sm:mb-3">
-          📋 FORM RESMI MPK
+          FORM RESMI MPK SMANSA
         </div>
         <h1 className="font-['Space_Grotesk'] text-3xl sm:text-5xl md:text-6xl font-black text-[#111111] uppercase tracking-tight">
-          DROP YOUR VOICE.
+          KIRIM SUARA & ASPIRASI
         </h1>
         <p className="font-['Plus_Jakarta_Sans'] text-sm sm:text-base md:text-lg text-[#111111] font-semibold mt-1.5 sm:mt-2">
-          Tenang, nggak harus formal. Yang penting jelas dan jujur.
+          Sampaikan keluhan, fasilitas yang perlu dibenahi, ataupun ide baru untuk sekolah kita.
         </p>
       </div>
 
       {/* Main Physical Clipboard Poster Card */}
       <div className="bg-[#FFFFFF] border-[2.5px] sm:border-[3px] border-[#111111] rounded-3xl p-4 sm:p-8 md:p-12 shadow-[5px_5px_0px_#111111] sm:shadow-[8px_8px_0px_#111111] relative">
-        {/* Top Paper Clip Decoration */}
-        <div className="absolute -top-3.5 sm:-top-4 left-1/2 -translate-x-1/2 w-24 sm:w-28 h-6 sm:h-7 bg-[#ffd9e1] border-[2px] border-[#111111] rounded-md shadow-[2px_2px_0px_#111111] flex items-center justify-center font-['Space_Grotesk'] text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-[#111111]">
-          📎 FORA CLIP
+        <div className="absolute -top-3.5 sm:-top-4 left-1/2 -translate-x-1/2 w-28 sm:w-32 h-6 sm:h-7 bg-[#ffd9e1] border-[2px] border-[#111111] rounded-md shadow-[2px_2px_0px_#111111] flex items-center justify-center font-['Space_Grotesk'] text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-[#111111]">
+          FORA CLIP
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6 pt-2">
@@ -199,13 +192,13 @@ export const SubmitPage: React.FC = () => {
                     key={cat.id}
                     type="button"
                     onClick={() => setCategory(cat.id)}
-                    className={`p-2.5 sm:p-3 rounded-2xl border-[2px] border-[#111111] font-['Space_Grotesk'] text-[11px] sm:text-xs font-bold flex flex-col items-center gap-1 sm:gap-1.5 transition-all cursor-pointer ${
+                    className={`p-2.5 sm:p-3 rounded-2xl border-[2px] border-[#111111] font-['Space_Grotesk'] text-[11px] sm:text-xs font-bold flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
                       isSelected
                         ? 'bg-[#111111] text-white shadow-[2px_2px_0px_#e01376] scale-102'
                         : 'bg-[#FCFBF5] text-[#111111] hover:bg-[#f0edec] shadow-[1.5px_1.5px_0px_#111111]'
                     }`}
                   >
-                    <span className="text-lg sm:text-xl">{cat.icon}</span>
+                    <CategoryIcon category={cat.id} className="w-5 h-5" />
                     <span className="truncate">{cat.name}</span>
                   </button>
                 );
@@ -231,7 +224,7 @@ export const SubmitPage: React.FC = () => {
                 setTitle(e.target.value);
                 if (errors.title) setErrors(prev => ({ ...prev, title: undefined }));
               }}
-              placeholder="Contoh: Lampu toilet lantai 2 gedung barat mati"
+              placeholder="Contoh: Lampu toilet lantai 2 gedung barat perlu diperbaiki"
               className={`w-full bg-[#FCFBF5] border-[2px] sm:border-[3px] rounded-xl px-3.5 sm:px-4 py-2.5 sm:py-3.5 font-['Plus_Jakarta_Sans'] text-xs sm:text-sm md:text-base font-semibold text-[#111111] placeholder:text-[#5a3f47]/50 focus:outline-none focus:ring-2 focus:ring-[#0051d5] shadow-[2px_2px_0px_#111111] ${
                 errors.title ? 'border-[#ba1a1a] bg-[#ffdad6]/20' : 'border-[#111111]'
               }`}
@@ -272,7 +265,7 @@ export const SubmitPage: React.FC = () => {
             )}
           </div>
 
-          {/* 4. Playful Drag and Drop File Upload */}
+          {/* 4. Drag and Drop File Upload */}
           <div>
             <label className="block font-['Space_Grotesk'] text-[11px] sm:text-xs uppercase font-black tracking-wider text-[#111111] mb-2">
               4. Lampirkan Foto / Dokumen Pendukung (Opsional)
@@ -296,8 +289,8 @@ export const SubmitPage: React.FC = () => {
                 accept="image/*,.pdf,.doc,.docx"
               />
               <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center">
-                <span className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#FFFFFF] border-[2px] border-[#111111] flex items-center justify-center text-xl sm:text-2xl shadow-[2px_2px_0px_#111111] mb-1.5 sm:mb-2">
-                  📎
+                <span className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#FFFFFF] border-[2px] border-[#111111] flex items-center justify-center text-[#111111] shadow-[2px_2px_0px_#111111] mb-1.5 sm:mb-2">
+                  <Paperclip className="w-5 h-5" />
                 </span>
                 <span className="font-['Space_Grotesk'] text-xs sm:text-sm font-black text-[#111111] uppercase tracking-wide">
                   + TAMBAHKAN FOTO ATAU DOKUMEN
@@ -317,7 +310,7 @@ export const SubmitPage: React.FC = () => {
                     className="flex items-center justify-between p-2 sm:p-2.5 bg-[#FFFFFF] border-[2px] border-[#111111] rounded-xl shadow-[2px_2px_0px_#111111]"
                   >
                     <div className="flex items-center gap-2 overflow-hidden">
-                      <span className="text-base">{file.type === 'image' ? '🖼️' : '📄'}</span>
+                      <FileText className="w-4 h-4 text-[#111111] shrink-0" />
                       <span className="font-['Space_Grotesk'] text-xs font-bold text-[#111111] truncate">
                         {file.name}
                       </span>
@@ -355,13 +348,14 @@ export const SubmitPage: React.FC = () => {
                   Kirim Sebagai Anonim (Disarankan)
                 </label>
               </div>
-              <span className="text-[9px] sm:text-[10px] font-black uppercase px-2 py-0.5 bg-[#21D99A] border border-[#111111] rounded-md shadow-[1px_1px_0px_#111111]">
-                🔒 AMAN
+              <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-black uppercase px-2 py-0.5 bg-[#21D99A] border border-[#111111] rounded-md shadow-[1px_1px_0px_#111111]">
+                <ShieldCheck className="w-3 h-3 text-[#111111]" />
+                <span>AMAN</span>
               </span>
             </div>
 
             <p className="font-['Plus_Jakarta_Sans'] text-[11px] sm:text-xs text-[#5a3f47] leading-relaxed">
-              Jika dicentang, nama dan kelasmu tidak akan dipublikasikan di feed dan hanya dicatat sebagai anonim.
+              Jika dicentang, nama dan kelas Anda tidak akan dipublikasikan di feed dan hanya dicatat sebagai anonim.
             </p>
 
             {/* Conditional Name and Class Inputs */}
@@ -403,13 +397,13 @@ export const SubmitPage: React.FC = () => {
           >
             {isSubmitting ? (
               <>
-                <span className="animate-spin text-lg sm:text-xl">⏳</span>
-                <span>MPK MENERIMA SUARAMU... ● ● ●</span>
+                <Loader2 className="w-5 h-5 animate-spin text-[#111111]" />
+                <span>MPK MENERIMA SUARAMU...</span>
               </>
             ) : (
               <>
-                <span className="text-lg sm:text-xl leading-none">🚀</span>
-                <span># KIRIM ASPIRASIKU →</span>
+                <Send className="w-4 h-4 text-[#111111]" />
+                <span>KIRIM ASPIRASIKU →</span>
               </>
             )}
           </button>

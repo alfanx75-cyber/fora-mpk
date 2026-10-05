@@ -2,6 +2,7 @@ import React from 'react';
 import { Aspiration } from '../types';
 import { CATEGORIES, STATUS_MAP } from '../data/mockData';
 import { useAspirations } from '../context/AspirationContext';
+import { CategoryIcon } from './CategoryIcon';
 
 interface AspirationCardProps {
   aspiration: Aspiration;
@@ -41,10 +42,10 @@ export const AspirationCard: React.FC<AspirationCardProps> = ({
         {/* Top Meta Header */}
         <div className="flex items-center justify-between gap-2 mb-3 sm:mb-4">
           <span
-            className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 border-[1.5px] sm:border-[2px] border-[#111111] rounded-full font-['Space_Grotesk'] text-[11px] sm:text-xs font-bold text-[#111111] shadow-[1px_1px_0px_#111111] sm:shadow-[1.5px_1.5px_0px_#111111]"
+            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 border-[1.5px] sm:border-[2px] border-[#111111] rounded-full font-['Space_Grotesk'] text-[11px] sm:text-xs font-bold text-[#111111] shadow-[1px_1px_0px_#111111] sm:shadow-[1.5px_1.5px_0px_#111111]"
             style={{ backgroundColor: category.bgColor }}
           >
-            <span>{category.icon}</span>
+            <CategoryIcon category={category.id} className="w-3.5 h-3.5" />
             <span className="uppercase">{category.name}</span>
           </span>
 

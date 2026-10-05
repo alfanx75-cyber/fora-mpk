@@ -1,9 +1,21 @@
 import React, { useState } from 'react';
 import { useAspirations } from '../context/AspirationContext';
 import { CATEGORIES, STATUS_MAP } from '../data/mockData';
+import { CategoryIcon } from '../components/CategoryIcon';
+import { FileText, Share2, User, EyeOff, Shield } from 'lucide-react';
+import { AspirationStatus } from '../types';
 
 export const AspirationDetailPage: React.FC = () => {
-  const { aspirations, selectedAspirationId, voteAspiration, addComment, navigate, showToast } = useAspirations();
+  const {
+    aspirations,
+    selectedAspirationId,
+    voteAspiration,
+    addComment,
+    navigate,
+    showToast,
+    isAdmin,
+    updateAspirationStatus,
+  } = useAspirations();
 
   const [commentText, setCommentText] = useState('');
   const [commentAuthor, setCommentAuthor] = useState('');
@@ -29,7 +41,7 @@ export const AspirationDetailPage: React.FC = () => {
   const category = CATEGORIES.find(c => c.id === aspiration.category) || {
     id: aspiration.category,
     name: aspiration.category,
-    icon: '💡',
+    icon: 'fasilitas',
     bgColor: '#ffd9e1',
   };
 
@@ -49,12 +61,12 @@ export const AspirationDetailPage: React.FC = () => {
 
   const handleShare = () => {
     navigator.clipboard?.writeText(window.location.href);
-    showToast('Tautan Disalin! 📋', `Link tiket ${aspiration.id} siap dibagikan ke grup kelas.`);
+    showToast('Tautan Disalin', `Tautan tiket ${aspiration.id} siap dibagikan.`);
   };
 
   return (
     <div className="w-full max-w-[1360px] mx-auto px-4 sm:px-6 md:px-8 py-6 sm:py-10 md:py-16 pb-20 sm:pb-16">
-      {/* Breadcrumb Navigation - Responsive flex wrap */}
+      {/* Breadcrumb Navigation */}
       <div className="flex items-center gap-1.5 sm:gap-2 font-['Space_Grotesk'] text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#5a3f47] mb-4 sm:mb-6 flex-wrap">
         <button onClick={() => navigate('/')} className="hover:underline hover:text-[#111111] cursor-pointer">
           Beranda
@@ -69,6 +81,49 @@ export const AspirationDetailPage: React.FC = () => {
         </span>
       </div>
 
+      {/* Admin Quick Action Banner (Visible when logged in) */}
+      {isAdmin && (
+        <div className="mb-6 bg-[#fde029] border-[2.5px] border-[#111111] rounded-2xl p-4 sm:p-5 shadow-[4px_4px_0px_#111111] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="w-8 h-8 rounded-lg bg-[#FFFFFF] border-[1.5px] border-[#111111] flex items-center justify-center shrink-0">
+              <Shield className="w-4 h-4 text-[#ba1a1a]" />
+            </span>
+            <div>
+              <span className="font-['Space_Grotesk'] text-xs font-black uppercase text-[#111111] block">
+                MODE ADMIN MPK AKTIF
+              </span>
+              <span className="font-['Plus_Jakarta_Sans'] text-[11px] text-[#111111]/80 font-semibold">
+                Ubah status tahapan tiket ini secara langsung:
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <select
+              value={aspiration.status}
+              onChange={e => {
+                updateAspirationStatus(aspiration.id, e.target.value as AspirationStatus);
+                showToast('Status Diperbarui', `Status tiket ${aspiration.id} kini: ${e.target.value.toUpperCase()}`);
+              }}
+              className="bg-[#FFFFFF] border-[2px] border-[#111111] rounded-xl px-3 py-1.5 font-['Space_Grotesk'] text-xs font-black uppercase shadow-[2px_2px_0px_#111111] cursor-pointer focus:outline-none"
+            >
+              <option value="submitted">01. DIKIRIM</option>
+              <option value="received">02. DITERIMA</option>
+              <option value="discussed">03. DIBAHAS</option>
+              <option value="follow_up">04. DITINDAKLANJUTI</option>
+              <option value="completed">05. SELESAI</option>
+            </select>
+
+            <button
+              onClick={() => navigate('/admin')}
+              className="btn-brutal px-3 py-1.5 bg-[#FFFFFF] border-[2px] border-[#111111] rounded-xl font-['Space_Grotesk'] text-xs font-bold uppercase shadow-[2px_2px_0px_#111111] cursor-pointer"
+            >
+              Buka Panel Admin →
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12">
         {/* Main Left Column: Content, Attachments, Comments */}
         <div className="lg:col-span-7 flex flex-col gap-6">
@@ -80,7 +135,7 @@ export const AspirationDetailPage: React.FC = () => {
                 className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 border-[1.5px] sm:border-[2px] border-[#111111] rounded-full font-['Space_Grotesk'] text-[11px] sm:text-xs font-bold text-[#111111] shadow-[1.5px_1.5px_0px_#111111]"
                 style={{ backgroundColor: category.bgColor }}
               >
-                <span>{category.icon}</span>
+                <CategoryIcon category={category.id} className="w-4 h-4" />
                 <span className="uppercase">{category.name}</span>
               </span>
 
@@ -91,9 +146,9 @@ export const AspirationDetailPage: React.FC = () => {
                 <button
                   onClick={handleShare}
                   title="Bagikan Tautan Aspirasi"
-                  className="btn-brutal p-1.5 bg-[#FFFFFF] border-[1.5px] sm:border-[2px] border-[#111111] rounded-lg shadow-[1.5px_1.5px_0px_#111111] hover:bg-[#fde029] cursor-pointer"
+                  className="btn-brutal p-1.5 bg-[#FFFFFF] border-[1.5px] sm:border-[2px] border-[#111111] rounded-lg shadow-[1.5px_1.5px_0px_#111111] hover:bg-[#fde029] cursor-pointer flex items-center justify-center"
                 >
-                  <span className="material-symbols-outlined text-base">share</span>
+                  <Share2 className="w-4 h-4 text-[#111111]" />
                 </button>
               </div>
             </div>
@@ -106,15 +161,15 @@ export const AspirationDetailPage: React.FC = () => {
             {/* Author Strip */}
             <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 text-xs font-semibold py-2.5 sm:py-3 border-y-[2px] border-dashed border-[#111111] mb-5 sm:mb-6">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-[#fde029] border border-[#111111] flex items-center justify-center font-bold text-xs shrink-0">
-                  {aspiration.isAnonymous ? '🕶️' : '🎓'}
+                <div className="w-7 h-7 rounded-full bg-[#fde029] border border-[#111111] flex items-center justify-center shrink-0 text-[#111111]">
+                  {aspiration.isAnonymous ? <EyeOff className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
                 </div>
                 <div>
                   <span className="font-['Space_Grotesk'] font-bold text-[#111111] block">
                     {aspiration.isAnonymous ? 'Anonim Terlindungi' : aspiration.authorName}
                   </span>
                   <span className="text-[#5a3f47] text-[10px] sm:text-[11px]">
-                    {aspiration.isAnonymous ? 'Identitas NISN Disembunyikan' : aspiration.className}
+                    {aspiration.isAnonymous ? 'Identitas Pelapor Dirahasiakan' : aspiration.className}
                   </span>
                 </div>
               </div>
@@ -132,18 +187,18 @@ export const AspirationDetailPage: React.FC = () => {
             {aspiration.attachments && aspiration.attachments.length > 0 && (
               <div className="mb-6 sm:mb-8 pt-4 border-t-[2px] border-[#111111]">
                 <h4 className="font-['Space_Grotesk'] text-xs uppercase font-black tracking-wider text-[#111111] mb-3 flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-base">attach_file</span>
+                  <FileText className="w-4 h-4 text-[#111111]" />
                   Lampiran & Bukti Pendukung ({aspiration.attachments.length})
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   {aspiration.attachments.map(att => (
                     <div
                       key={att.name}
-                      onClick={() => showToast('Membuka Lampiran 📄', `Melihat berkas: ${att.name}`)}
+                      onClick={() => showToast('Membuka Lampiran', `Melihat berkas: ${att.name}`)}
                       className="card-brutal-hover flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 bg-[#FCFBF5] border-[2px] border-[#111111] rounded-xl shadow-[2px_2px_0px_#111111] sm:shadow-[3px_3px_0px_#111111] cursor-pointer"
                     >
-                      <span className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-[#dbe1ff] border border-[#111111] flex items-center justify-center text-sm sm:text-base shrink-0">
-                        {att.type === 'image' ? '🖼️' : '📄'}
+                      <span className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-[#dbe1ff] border border-[#111111] flex items-center justify-center text-[#111111] shrink-0">
+                        <FileText className="w-4 h-4" />
                       </span>
                       <div className="flex flex-col overflow-hidden min-w-0">
                         <span className="font-['Space_Grotesk'] text-xs font-bold truncate text-[#111111]">
@@ -327,7 +382,7 @@ export const AspirationDetailPage: React.FC = () => {
               {/* Action Taken */}
               <div className="pt-1 sm:pt-2">
                 <span className="font-['Space_Grotesk'] text-[10px] sm:text-[11px] font-black uppercase text-[#111111] block mb-1">
-                  📌 TINDAK LANJUT NYATA:
+                  TINDAK LANJUT NYATA:
                 </span>
                 <p className="font-['Plus_Jakarta_Sans'] text-xs text-[#111111] font-bold bg-[#FFFFFF]/80 p-2.5 rounded-xl border border-[#111111]">
                   {aspiration.mpkResponse.actionTaken}
@@ -346,7 +401,6 @@ export const AspirationDetailPage: React.FC = () => {
             <div className="relative pl-6 space-y-5 sm:space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-[3px] before:bg-[#111111]">
               {aspiration.timeline.map((step, idx) => (
                 <div key={idx} className="relative">
-                  {/* Node Dot */}
                   <div
                     className={`absolute -left-[30px] top-0 w-5 h-5 rounded-full border-[2px] border-[#111111] flex items-center justify-center text-[10px] font-bold ${
                       step.completed

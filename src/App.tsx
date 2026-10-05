@@ -9,6 +9,7 @@ import { AspirationDetailPage } from './pages/AspirationDetailPage';
 import { SubmitPage } from './pages/SubmitPage';
 import { StatusPage } from './pages/StatusPage';
 import { AboutPage } from './pages/AboutPage';
+import { AdminPage } from './pages/AdminPage';
 
 const AppContent: React.FC = () => {
   const { currentRoute } = useAspirations();
@@ -31,6 +32,9 @@ const AppContent: React.FC = () => {
     }
     if (currentRoute === '/tentang') {
       return <AboutPage />;
+    }
+    if (currentRoute === '/admin') {
+      return <AdminPage />;
     }
     return <HomePage />;
   };

@@ -1,5 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useAspirations } from '../context/AspirationContext';
+import { ShieldCheck, Flame, Building2 } from 'lucide-react';
+import { CategoryIcon } from './CategoryIcon';
 
 export const HeroSection: React.FC = () => {
   const { navigate, showToast } = useAspirations();
@@ -33,7 +35,7 @@ export const HeroSection: React.FC = () => {
     if (!heroLiked) {
       setHeroLikes(prev => prev + 1);
       setHeroLiked(true);
-      showToast('Dukungan Dicatat! ❤️', 'Kamu mendukung aspirasi bangku halte & koridor.');
+      showToast('Dukungan Dicatat', 'Kamu mendukung aspirasi bangku halte & koridor.');
     } else {
       setHeroLikes(prev => prev - 1);
       setHeroLiked(false);
@@ -42,18 +44,18 @@ export const HeroSection: React.FC = () => {
 
   return (
     <section className="relative w-full max-w-[1360px] mx-auto px-4 sm:px-6 md:px-8 pt-6 sm:pt-10 md:pt-14 pb-12 sm:pb-16 md:pb-24 overflow-hidden">
-      {/* Decorative Floating Geometry & Stickers (Carefully gated for mobile) */}
+      {/* Decorative Floating Geometry */}
       <div
         className="animate-float-slow absolute -top-4 right-8 md:right-32 w-20 h-20 md:w-28 md:h-28 rounded-full bg-[#316bf3] border-[3px] border-[#111111] -z-10 shadow-[4px_4px_0px_#111111] hidden md:block"
         style={{ '--rot': '0deg' } as React.CSSProperties}
       />
 
       <div
-        onClick={() => showToast('Keamanan Terjamin 🛡️', 'Fitur anonimitas FORA 100% terjaga dengan enkripsi internal.')}
-        className="animate-float-mid hidden md:flex absolute top-40 left-2 bg-[#fde029] border-[3px] border-[#111111] px-3.5 py-1.5 rounded-xl shadow-[4px_4px_0px_#111111] items-center gap-2 z-20 select-none cursor-pointer hover:rotate-3 transition-transform"
+        onClick={() => showToast('Keamanan Terjamin', 'Fitur anonimitas FORA 100% terjaga dengan enkripsi internal.')}
+        className="animate-float-mid hidden md:flex absolute top-14 md:top-14 md:right-8 lg:right-24 bg-[#fde029] border-[3px] border-[#111111] px-3.5 py-1.5 rounded-xl shadow-[4px_4px_0px_#111111] items-center gap-2 z-20 select-none cursor-pointer hover:rotate-3 transition-transform"
         style={{ '--rot': '-10deg' } as React.CSSProperties}
       >
-        <span className="text-lg">⭐</span>
+        <ShieldCheck className="w-4 h-4 text-[#111111]" />
         <span className="font-['Space_Grotesk'] text-xs font-extrabold uppercase text-[#111111] tracking-wider">
           100% ANONIM AMAN
         </span>
@@ -63,7 +65,7 @@ export const HeroSection: React.FC = () => {
         className="animate-float-slow hidden xl:block absolute bottom-12 left-1/3 bg-[#ffd9e1] border-[3px] border-[#111111] px-5 py-1.5 rounded-full shadow-[4px_4px_0px_#111111] font-['Space_Grotesk'] text-xs font-black text-[#111111] z-10 select-none"
         style={{ '--rot': '4deg' } as React.CSSProperties}
       >
-        ⚡ NO SENSOR • LANGSUNG KE WAKASEK & KEPSEK
+        NO SENSOR • LANGSUNG KE WAKASEK & KEPSEK
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
@@ -76,16 +78,16 @@ export const HeroSection: React.FC = () => {
               <span className="absolute w-3 h-3 rounded-full bg-[#21D99A] animate-ping" />
             </div>
             <span className="font-['Space_Grotesk'] text-[10px] sm:text-xs font-black text-[#111111] uppercase tracking-wider truncate">
-              ⚡ FORUM ASPIRASI MPK 2026 • RESMI & INDEPENDEN
+              FORUM ASPIRASI MPK SMANSA • RESMI & INDEPENDEN
             </span>
           </div>
 
-          {/* Giant Bold Typography Headline - Scaled specifically for 320px–768px screens */}
+          {/* Giant Bold Typography Headline */}
           <h1 className="font-['Space_Grotesk'] text-4xl xs:text-5xl sm:text-6xl md:text-7xl lg:text-8xl leading-[0.92] text-[#111111] font-black tracking-tighter uppercase mb-4 sm:mb-6">
-            SUARAMU.<br />
-            DIDENGAR.<br />
+            SUARAMU<br />
+            DIDENGAR<br />
             <span className="relative inline-block mt-1 sm:mt-2 px-3 sm:px-4 py-1 bg-[#e01376] text-[#FFFFFF] border-[2px] sm:border-[3px] border-[#111111] rounded-xl shadow-[4px_4px_0px_#111111] sm:shadow-[6px_6px_0px_#111111] -rotate-1 hover:rotate-0 transition-transform">
-              BERGERAK.
+              BERGERAK
             </span>
           </h1>
 
@@ -127,7 +129,7 @@ export const HeroSection: React.FC = () => {
               </span>
             </div>
             <span className="font-['Space_Grotesk'] text-[11px] sm:text-xs text-[#111111] font-extrabold uppercase tracking-wider">
-              Didukung oleh 1,280+ Siswa Aktif di 36 Kelas
+              Didukung oleh Sekitar 1.000+ Siswa di 30 Kelas SMANSA
             </span>
           </div>
         </div>
@@ -141,11 +143,12 @@ export const HeroSection: React.FC = () => {
         >
           {/* Trending Ribbon Tag */}
           <div
-            onClick={() => showToast('Trending Pekan Ini 🔥', 'Topik fasilitas halte & wifi paling banyak didukung!')}
-            className="animate-float-mid absolute -top-3.5 right-2 sm:-right-2 bg-[#FF7A30] text-white border-[2px] sm:border-[3px] border-[#111111] px-2.5 sm:px-3.5 py-1 rounded-xl font-['Space_Grotesk'] text-[10px] sm:text-xs font-black uppercase shadow-[2px_2px_0px_#111111] sm:shadow-[3px_3px_0px_#111111] z-20 select-none cursor-pointer"
+            onClick={() => showToast('Trending Topik', 'Topik fasilitas dan infrastruktur sekolah paling banyak dibahas.')}
+            className="animate-float-mid absolute -top-3.5 right-2 sm:-right-2 bg-[#FF7A30] text-white border-[2px] sm:border-[3px] border-[#111111] px-2.5 sm:px-3.5 py-1 rounded-xl font-['Space_Grotesk'] text-[10px] sm:text-xs font-black uppercase shadow-[2px_2px_0px_#111111] sm:shadow-[3px_3px_0px_#111111] z-20 select-none cursor-pointer flex items-center gap-1"
             style={{ '--rot': '6deg' } as React.CSSProperties}
           >
-            🔥 TOP DISKUSI
+            <Flame className="w-3.5 h-3.5" />
+            <span>TOP DISKUSI</span>
           </div>
 
           <div
@@ -174,7 +177,8 @@ export const HeroSection: React.FC = () => {
             <div className="p-4 sm:p-6 md:p-7 flex flex-col gap-3 sm:gap-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <span className="inline-flex items-center gap-1.5 bg-[#ffd9e1] px-2.5 py-1 border-[1.5px] sm:border-[2px] border-[#111111] rounded-full font-['Space_Grotesk'] text-[11px] sm:text-xs text-[#111111] font-bold">
-                  <span>🏫</span> FASILITAS SEKOLAH
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span>FASILITAS SEKOLAH</span>
                 </span>
                 <span className="bg-[#fde029] text-[#111111] border-[1.5px] sm:border-[2px] border-[#111111] px-2 py-0.5 rounded-md font-['Space_Grotesk'] text-[10px] sm:text-[11px] font-black uppercase tracking-wide">
                   [ DIBAHAS OLEH MPK ]
@@ -183,21 +187,21 @@ export const HeroSection: React.FC = () => {
 
               {/* Headline Quote */}
               <p
-                onClick={() => navigate('/aspirasi/MPK-2026-8849')}
+                onClick={() => navigate('/aspirasi')}
                 className="font-['Space_Grotesk'] text-lg sm:text-xl font-bold text-[#111111] leading-snug tracking-tight hover:text-[#e01376] cursor-pointer transition-colors"
               >
-                “Bisa nggak halte sekolah dan koridor lab ditambah tempat duduk?”
+                “Pengadaan bangku modular dan tempat istirahat di koridor siswa”
               </p>
 
               <div className="flex items-center justify-between text-[#111111] border-b-[2px] border-dashed border-[#111111] pb-3 text-xs">
                 <div className="flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-base">person</span>
                   <span className="font-['Plus_Jakarta_Sans'] font-bold">
-                    Siswa Kelas XI MIPA
+                    Perwakilan Siswa SMANSA
                   </span>
                 </div>
                 <span className="font-['Space_Grotesk'] text-[10px] sm:text-[11px] text-[#5a3f47] font-bold">
-                  18 MENIT LALU
+                  PRIORITAS KOMISI
                 </span>
               </div>
 

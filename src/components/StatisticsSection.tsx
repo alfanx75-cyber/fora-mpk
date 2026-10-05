@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAspirations } from '../context/AspirationContext';
+import { Inbox, MessageSquare, Clock, CheckCircle2 } from 'lucide-react';
 
 export const StatisticsSection: React.FC = () => {
   const { stats } = useAspirations();
@@ -18,13 +19,22 @@ export const StatisticsSection: React.FC = () => {
         if (entries[0].isIntersecting && !hasAnimated) {
           setHasAnimated(true);
 
-          const duration = 1600;
+          if (stats.total === 0) {
+            setCounts({
+              total: 0,
+              responded: 0,
+              inProgress: 0,
+              completed: 0,
+            });
+            return;
+          }
+
+          const duration = 1200;
           const startTimestamp = performance.now();
 
           const animate = (now: number) => {
             const elapsed = now - startTimestamp;
             const progress = Math.min(elapsed / duration, 1);
-            // Cubic ease out
             const eased = 1 - Math.pow(1 - progress, 3);
 
             setCounts({
@@ -59,6 +69,18 @@ export const StatisticsSection: React.FC = () => {
     return () => observer.disconnect();
   }, [hasAnimated, stats]);
 
+  // Keep counts in sync if stats change after animation
+  useEffect(() => {
+    if (hasAnimated) {
+      setCounts({
+        total: stats.total,
+        responded: stats.responded,
+        inProgress: stats.inProgress,
+        completed: stats.completed,
+      });
+    }
+  }, [stats, hasAnimated]);
+
   return (
     <section
       ref={sectionRef}
@@ -69,7 +91,7 @@ export const StatisticsSection: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 sm:mb-10">
           <div>
             <div className="inline-block px-3 py-1 bg-[#FFFFFF] border-[2px] border-[#111111] rounded-lg font-['Space_Grotesk'] text-[10px] sm:text-xs uppercase font-extrabold tracking-widest mb-2 sm:mb-3 shadow-[2px_2px_0px_#111111]">
-              DATA REAL-TIME PERIODE 2026/2027
+              DATA REAL-TIME SMANSA
             </div>
             <h2 className="font-['Space_Grotesk'] text-2xl sm:text-3xl md:text-5xl font-black text-[#111111] uppercase tracking-tight">
               SEJAUH INI, KITA SUDAH DENGAR…
@@ -85,8 +107,8 @@ export const StatisticsSection: React.FC = () => {
           {/* Card 1: Total Masuk */}
           <div className="card-brutal-hover bg-[#ffd9e1] border-[2.5px] sm:border-[3px] border-[#111111] p-4 sm:p-5 md:p-6 rounded-3xl shadow-[4px_4px_0px_#111111] sm:shadow-[6px_6px_0px_#111111] flex flex-col justify-between">
             <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <span className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#FFFFFF] border-[2px] border-[#111111] flex items-center justify-center font-bold text-base sm:text-lg shadow-[2px_2px_0px_#111111]">
-                📥
+              <span className="w-10 h-10 rounded-xl bg-[#FFFFFF] border-[2px] border-[#111111] flex items-center justify-center text-[#111111] shadow-[2px_2px_0px_#111111]">
+                <Inbox className="w-5 h-5" />
               </span>
               <span className="font-['Space_Grotesk'] text-[10px] sm:text-[11px] uppercase font-black bg-[#FFFFFF] px-2 py-0.5 border border-[#111111] rounded-md shadow-[1px_1px_0px_#111111]">
                 TOTAL INBOX
@@ -100,7 +122,7 @@ export const StatisticsSection: React.FC = () => {
                 ASPIRASI MASUK
               </div>
               <p className="font-['Plus_Jakarta_Sans'] text-[11px] sm:text-xs text-[#111111]/80 mt-1.5 sm:mt-2 font-medium">
-                Dari 36 komisi kelas X, XI, dan XII aktif.
+                Dari 30 perwakilan kelas X, XI, dan XII SMANSA aktif.
               </p>
             </div>
           </div>
@@ -108,8 +130,8 @@ export const StatisticsSection: React.FC = () => {
           {/* Card 2: Sudah Ditanggapi */}
           <div className="card-brutal-hover bg-[#fde029] border-[2.5px] sm:border-[3px] border-[#111111] p-4 sm:p-5 md:p-6 rounded-3xl shadow-[4px_4px_0px_#111111] sm:shadow-[6px_6px_0px_#111111] flex flex-col justify-between">
             <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <span className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#FFFFFF] border-[2px] border-[#111111] flex items-center justify-center font-bold text-base sm:text-lg shadow-[2px_2px_0px_#111111]">
-                💬
+              <span className="w-10 h-10 rounded-xl bg-[#FFFFFF] border-[2px] border-[#111111] flex items-center justify-center text-[#111111] shadow-[2px_2px_0px_#111111]">
+                <MessageSquare className="w-5 h-5" />
               </span>
               <span className="font-['Space_Grotesk'] text-[10px] sm:text-[11px] uppercase font-black bg-[#FFFFFF] px-2 py-0.5 border border-[#111111] rounded-md shadow-[1px_1px_0px_#111111]">
                 RESPON MPK
@@ -123,7 +145,7 @@ export const StatisticsSection: React.FC = () => {
                 SUDAH DITANGGAPI
               </div>
               <p className="font-['Plus_Jakarta_Sans'] text-[11px] sm:text-xs text-[#111111]/80 mt-1.5 sm:mt-2 font-medium">
-                Rata-rata respon perdana &lt; 24 jam kerja.
+                Verifikasi & respon awal oleh tim MPK.
               </p>
             </div>
           </div>
@@ -131,8 +153,8 @@ export const StatisticsSection: React.FC = () => {
           {/* Card 3: Sedang Diproses */}
           <div className="card-brutal-hover bg-[#dbe1ff] border-[2.5px] sm:border-[3px] border-[#111111] p-4 sm:p-5 md:p-6 rounded-3xl shadow-[4px_4px_0px_#111111] sm:shadow-[6px_6px_0px_#111111] flex flex-col justify-between">
             <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <span className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#FFFFFF] border-[2px] border-[#111111] flex items-center justify-center font-bold text-base sm:text-lg shadow-[2px_2px_0px_#111111]">
-                ⚙️
+              <span className="w-10 h-10 rounded-xl bg-[#FFFFFF] border-[2px] border-[#111111] flex items-center justify-center text-[#111111] shadow-[2px_2px_0px_#111111]">
+                <Clock className="w-5 h-5" />
               </span>
               <span className="font-['Space_Grotesk'] text-[10px] sm:text-[11px] uppercase font-black bg-[#FFFFFF] px-2 py-0.5 border border-[#111111] rounded-md shadow-[1px_1px_0px_#111111]">
                 ON GOING
@@ -146,7 +168,7 @@ export const StatisticsSection: React.FC = () => {
                 SEDANG DIPROSES
               </div>
               <p className="font-['Plus_Jakarta_Sans'] text-[11px] sm:text-xs text-[#111111]/80 mt-1.5 sm:mt-2 font-medium">
-                Sedang digodok dalam sidang dengar pendapat.
+                Sedang dibahas dalam sidang atau nota dinas.
               </p>
             </div>
           </div>
@@ -154,8 +176,8 @@ export const StatisticsSection: React.FC = () => {
           {/* Card 4: Selesai */}
           <div className="card-brutal-hover bg-[#21D99A]/40 border-[2.5px] sm:border-[3px] border-[#111111] p-4 sm:p-5 md:p-6 rounded-3xl shadow-[4px_4px_0px_#111111] sm:shadow-[6px_6px_0px_#111111] flex flex-col justify-between">
             <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <span className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#FFFFFF] border-[2px] border-[#111111] flex items-center justify-center font-bold text-base sm:text-lg shadow-[2px_2px_0px_#111111]">
-                ✅
+              <span className="w-10 h-10 rounded-xl bg-[#FFFFFF] border-[2px] border-[#111111] flex items-center justify-center text-[#111111] shadow-[2px_2px_0px_#111111]">
+                <CheckCircle2 className="w-5 h-5" />
               </span>
               <span className="font-['Space_Grotesk'] text-[10px] sm:text-[11px] uppercase font-black bg-[#FFFFFF] px-2 py-0.5 border border-[#111111] rounded-md shadow-[1px_1px_0px_#111111]">
                 TEREKSEKUSI

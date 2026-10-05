@@ -1,0 +1,61 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function isValidAspiration(data) {
+      return data.id is string && data.id.size() <= 64
+        && data.title is string && data.title.size() <= 200
+        && data.description is string && data.description.size() <= 3000
+        && data.category is string && data.category in ['fasilitas', 'kantin', 'akademik', 'event', 'transportasi', 'kebersihan', 'ide_baru', 'lainnya']
+        && data.authorName is string && data.authorName.size() <= 100
+        && data.className is string && data.className.size() <= 50
+        && data.isAnonymous is bool
+        && data.supportCount is number
+        && data.status is string && data.status in ['submitted', 'received', 'discussed', 'follow_up', 'completed'];
+    }
+
+    // Aspirations Collection
+    match /aspirations/{aspirationId} {
+      // Anyone can read aspirations publicly to see live status & student voices
+      allow read: if true;
+
+      // Any student can submit a valid aspiration
+      allow create: if isValidId(aspirationId) && isValidAspiration(incoming());
+
+      // Anyone can upvote or add comments, and admins can update statuses
+      allow update: if isValidId(aspirationId) && isValidAspiration(incoming());
+
+      // Deletions allowed for cleanups
+      allow delete: if isValidId(aspirationId);
+    }
+
+    // Admin Settings Collection (for custom username & password credentials)
+    match /admin_settings/{settingId} {
+      allow read: if isValidId(settingId);
+      allow create, update: if isValidId(settingId)
+        && incoming().adminUsername is string && incoming().adminUsername.size() <= 50
+        && incoming().passwordHash is string && incoming().passwordHash.size() <= 256;
+      allow delete: if false;
+    }
+
+    // Test connection doc
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+  }
+}

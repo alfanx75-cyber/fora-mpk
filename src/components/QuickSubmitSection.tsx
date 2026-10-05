@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAspirations } from '../context/AspirationContext';
 import { CATEGORIES } from '../data/mockData';
 import { AspirationCategory } from '../types';
+import { Send, CheckCircle2 } from 'lucide-react';
 
 export const QuickSubmitSection: React.FC = () => {
   const { addAspiration, navigate } = useAspirations();
@@ -17,11 +18,11 @@ export const QuickSubmitSection: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
-      setValidationError('Judulnya belum diisi 👀');
+      setValidationError('Judul aspirasi wajib diisi');
       return;
     }
     if (!description.trim()) {
-      setValidationError('Ceritakan detail aspirasimu sedikit lagi ya! ✍️');
+      setValidationError('Ceritakan detail aspirasimu secara jelas');
       return;
     }
 
@@ -45,7 +46,6 @@ export const QuickSubmitSection: React.FC = () => {
   return (
     <section id="kirim-aspirasi-box" className="w-full max-w-[1360px] mx-auto px-4 sm:px-6 md:px-8 py-12 sm:py-16 md:py-24">
       <div className="bg-[#FFFFFF] border-[2.5px] sm:border-[3px] border-[#111111] rounded-3xl shadow-[5px_5px_0px_#111111] sm:shadow-[10px_10px_0px_#111111] p-5 sm:p-10 md:p-14 relative overflow-hidden">
-        {/* Giant Background Watermark Text (Clipped and hidden on extra small) */}
         <div className="hidden sm:block absolute -right-8 -bottom-10 select-none pointer-events-none opacity-5 font-['Space_Grotesk'] text-[160px] md:text-[240px] font-black text-[#111111] leading-none">
           VOICE
         </div>
@@ -57,7 +57,7 @@ export const QuickSubmitSection: React.FC = () => {
               className="animate-float-slow inline-block px-3 sm:px-3.5 py-1 sm:py-1.5 bg-[#e01376] text-white border-[2px] border-[#111111] rounded-xl font-['Space_Grotesk'] text-[10px] sm:text-xs uppercase font-black shadow-[2px_2px_0px_#111111] mb-3 sm:mb-4"
               style={{ '--rot': '-2deg' } as React.CSSProperties}
             >
-              📢 DROP YOUR VOICE!
+              SUARAKAN PERUBAHAN
             </div>
 
             <h2 className="font-['Space_Grotesk'] text-2xl sm:text-4xl md:text-5xl font-black text-[#111111] uppercase tracking-tight mb-3 sm:mb-4">
@@ -115,7 +115,7 @@ export const QuickSubmitSection: React.FC = () => {
                 >
                   {CATEGORIES.map(cat => (
                     <option key={cat.id} value={cat.id}>
-                      {cat.icon} {cat.name}
+                      {cat.name}
                     </option>
                   ))}
                 </select>
@@ -197,7 +197,7 @@ export const QuickSubmitSection: React.FC = () => {
                 type="submit"
                 className="btn-brutal mt-1.5 w-full flex items-center justify-center gap-2 bg-[#e01376] hover:bg-[#b5005d] text-white border-[2.5px] sm:border-[3px] border-[#111111] rounded-2xl py-3.5 sm:py-4 font-['Space_Grotesk'] text-xs sm:text-sm font-black uppercase tracking-wider shadow-[3px_3px_0px_#111111] sm:shadow-[4px_4px_0px_#111111] cursor-pointer min-h-[46px]"
               >
-                <span className="material-symbols-outlined text-lg sm:text-xl">send</span>
+                <Send className="w-4 h-4" />
                 <span>+ KIRIM ASPIRASI SEKARANG</span>
               </button>
             </form>
@@ -205,9 +205,10 @@ export const QuickSubmitSection: React.FC = () => {
             {/* Success Notification Alert */}
             {submittedTicketId && (
               <div className="mt-4 bg-[#21D99A] border-[2.5px] sm:border-[3px] border-[#111111] rounded-2xl p-3.5 sm:p-4 text-center shadow-[3px_3px_0px_#111111] sm:shadow-[4px_4px_0px_#111111] animate-[popStamp_0.3s_ease_forwards]">
-                <span className="font-['Space_Grotesk'] text-base sm:text-lg font-black text-[#111111] block">
-                  🎉 ASPIRASI SUDAH MENDARAT!
-                </span>
+                <div className="flex items-center justify-center gap-1.5 font-['Space_Grotesk'] text-base sm:text-lg font-black text-[#111111]">
+                  <CheckCircle2 className="w-5 h-5 text-[#111111]" />
+                  <span>ASPIRASI BERHASIL DIKIRIM</span>
+                </div>
                 <p className="font-['Plus_Jakarta_Sans'] text-xs text-[#111111] font-bold mt-1">
                   Nomor Tiketmu:{' '}
                   <span className="font-mono underline font-extrabold text-[#111111]">

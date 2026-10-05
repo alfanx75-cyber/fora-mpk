@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useAspirations } from '../context/AspirationContext';
+import { MPK_INSTAGRAM_URL, MPK_INSTAGRAM_HANDLE, MPK_EMAIL } from '../data/mockData';
+import { Mail, Shield } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   const { navigate, showToast } = useAspirations();
@@ -37,7 +39,7 @@ export const Footer: React.FC = () => {
 
               <div className="inline-block px-3 py-1.5 bg-[#FFFFFF] border-[2px] border-[#111111] rounded-xl shadow-[2px_2px_0px_#111111] sm:shadow-[3px_3px_0px_#111111]">
                 <span className="font-['Space_Grotesk'] text-[11px] sm:text-xs font-bold text-[#111111]">
-                  📌 “Suaramu bukan cuma masuk form. Suaramu bergerak.”
+                  “Suaramu bukan cuma masuk form. Suaramu bergerak.”
                 </span>
               </div>
             </div>
@@ -88,6 +90,15 @@ export const Footer: React.FC = () => {
                     + Drop Your Voice (Kirim Form)
                   </button>
                 </li>
+                <li>
+                  <button
+                    onClick={() => navigate('/admin')}
+                    className="hover:underline text-[#5a3f47] font-semibold text-left cursor-pointer flex items-center gap-1"
+                  >
+                    <Shield className="w-3.5 h-3.5" />
+                    <span>Panel Admin MPK</span>
+                  </button>
+                </li>
               </ul>
             </div>
 
@@ -99,21 +110,25 @@ export const Footer: React.FC = () => {
               <p className="font-['Plus_Jakarta_Sans'] text-xs text-[#111111]/80 font-medium">
                 Punya aspirasi mendesak atau ingin konsultasi tatap muka dengan perwakilan komisi kelasmu?
               </p>
-              <div className="flex flex-wrap gap-2 sm:gap-2.5 mt-1">
-                <button
-                  onClick={() => showToast('Instagram Resmi MPK', 'Hubungi DM kami di @mpksiswa.id untuk respon cepat!')}
-                  className="btn-brutal flex items-center gap-1.5 sm:gap-2 px-3 py-2 bg-[#FFFFFF] border-[2px] border-[#111111] rounded-xl shadow-[2px_2px_0px_#111111] sm:shadow-[3px_3px_0px_#111111] font-['Space_Grotesk'] text-xs font-bold cursor-pointer"
+              <div className="flex flex-col gap-2 mt-1">
+                <div className="flex flex-wrap gap-2 sm:gap-2.5">
+                  <a
+                    href={MPK_INSTAGRAM_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-brutal flex items-center gap-1.5 sm:gap-2 px-3 py-2 bg-[#FFFFFF] border-[2px] border-[#111111] rounded-xl shadow-[2px_2px_0px_#111111] sm:shadow-[3px_3px_0px_#111111] font-['Space_Grotesk'] text-xs font-bold hover:bg-[#fde029] transition-colors cursor-pointer"
+                  >
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#FF7A30]" />
+                    <span>{MPK_INSTAGRAM_HANDLE}</span>
+                  </a>
+                </div>
+                <a
+                  href={`mailto:${MPK_EMAIL}`}
+                  className="btn-brutal inline-flex items-center gap-2 px-3 py-2 bg-[#FFFFFF] border-[2px] border-[#111111] rounded-xl shadow-[2px_2px_0px_#111111] font-['Space_Grotesk'] text-xs font-bold hover:bg-[#ffd9e1] transition-colors cursor-pointer w-fit"
                 >
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#FF7A30]" />
-                  <span>@mpksiswa.id</span>
-                </button>
-                <button
-                  onClick={() => showToast('Sekretariat MPK', 'Buka setiap jam istirahat di Gedung B Lantai 2 (sebelah Lab Komputer).')}
-                  className="btn-brutal flex items-center gap-1.5 sm:gap-2 px-3 py-2 bg-[#FFFFFF] border-[2px] border-[#111111] rounded-xl shadow-[2px_2px_0px_#111111] sm:shadow-[3px_3px_0px_#111111] font-['Space_Grotesk'] text-xs font-bold cursor-pointer"
-                >
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#316bf3]" />
-                  <span>Ruang MPK Gd. B Lt. 2</span>
-                </button>
+                  <Mail className="w-4 h-4 text-[#111111]" />
+                  <span>{MPK_EMAIL}</span>
+                </a>
               </div>
             </div>
           </div>
@@ -137,6 +152,13 @@ export const Footer: React.FC = () => {
               >
                 Kode Etik Aspirasi
               </button>
+              <span className="text-[#111111]">•</span>
+              <button
+                onClick={() => navigate('/admin')}
+                className="hover:underline text-[#0051d5] font-black cursor-pointer"
+              >
+                Login Admin
+              </button>
             </div>
           </div>
         </div>
@@ -148,7 +170,7 @@ export const Footer: React.FC = () => {
           <div className="bg-[#FFFFFF] border-[3px] sm:border-[4px] border-[#111111] rounded-3xl p-5 sm:p-8 max-w-lg w-full shadow-[6px_6px_0px_#111111] sm:shadow-[10px_10px_0px_#111111] animate-[popModal_0.3s_ease-out_forwards] relative overflow-hidden mx-auto my-auto max-h-[92vh] flex flex-col">
             <div className="flex items-center justify-between pb-3 sm:pb-4 border-b-[2px] border-[#111111] mb-3 sm:mb-4">
               <span className="font-['Space_Grotesk'] text-base sm:text-lg font-extrabold uppercase">
-                {modalType === 'privacy' ? '🛡️ KEBIJAKAN PRIVASI' : '📜 KODE ETIK ASPIRASI'}
+                {modalType === 'privacy' ? 'KEBIJAKAN PRIVASI' : 'KODE ETIK ASPIRASI'}
               </span>
               <button
                 onClick={() => setModalType(null)}

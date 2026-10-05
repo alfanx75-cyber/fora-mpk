@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useAspirations } from '../context/AspirationContext';
+import { Shield } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
-  const { currentRoute, navigate, stats } = useAspirations();
+  const { currentRoute, navigate, stats, isAdmin } = useAspirations();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
@@ -98,6 +99,20 @@ export const Navbar: React.FC = () => {
               <span className="inline xs:hidden sm:hidden">Kirim</span>
             </button>
 
+            {/* Quick Admin Button (Desktop & Tablets) */}
+            <button
+              onClick={() => handleNav('/admin')}
+              title={isAdmin ? 'Panel Admin MPK (Aktif)' : 'Login Admin MPK'}
+              className={`hidden md:flex items-center gap-1 px-3 py-2 sm:py-2.5 border-[2px] sm:border-[2.5px] border-[#111111] rounded-xl font-['Space_Grotesk'] text-xs font-black uppercase shadow-[2px_2px_0px_#111111] cursor-pointer transition-colors ${
+                isAdmin
+                  ? 'bg-[#21D99A] text-[#111111] hover:bg-[#1fbe87]'
+                  : 'bg-[#FFFFFF] text-[#5a3f47] hover:bg-[#fde029] hover:text-[#111111]'
+              }`}
+            >
+              <Shield className="w-3.5 h-3.5" />
+              <span>{isAdmin ? 'Admin' : 'Admin'}</span>
+            </button>
+
             {/* Mobile / Tablet Menu Trigger (Visible on < md) */}
             <button
               onClick={() => setMobileMenuOpen(prev => !prev)}
@@ -132,6 +147,19 @@ export const Navbar: React.FC = () => {
                   </button>
                 );
               })}
+
+              {/* Admin MPK Link in Drawer */}
+              <button
+                onClick={() => handleNav('/admin')}
+                className={`w-full text-left px-4 py-3 rounded-xl font-['Space_Grotesk'] text-sm font-extrabold uppercase tracking-wider border-[2px] border-[#111111] transition-all cursor-pointer flex items-center gap-2.5 min-h-[44px] ${
+                  isActive('/admin')
+                    ? 'bg-[#21D99A] text-[#111111] shadow-[3px_3px_0px_#111111]'
+                    : 'bg-[#FCFBF5] text-[#5a3f47] hover:bg-[#f0edec]'
+                }`}
+              >
+                <Shield className="w-4 h-4 text-[#ba1a1a]" />
+                <span>Panel Admin MPK {isAdmin ? '(Aktif)' : ''}</span>
+              </button>
 
               <div className="pt-3 border-t-[2px] border-dashed border-[#111111] flex items-center justify-between px-2">
                 <span className="font-['Space_Grotesk'] text-xs font-bold text-[#5a3f47] uppercase">
