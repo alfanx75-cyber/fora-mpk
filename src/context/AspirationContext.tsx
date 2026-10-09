@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { Aspiration, AspirationCategory, AspirationStatus, MPKResponse, ToastMessage, AppStats } from '../types';
+import { Aspiration, AspirationCategory, AspirationStatus, MPKResponse, ToastMessage, AppStats, Attachment } from '../types';
 import { STATUS_MAP, PREVIOUS_ASPIRATIONS } from '../data/mockData';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { generateAccessKey, hashAccessKey, verifyAccessKey } from '../utils/crypto';
@@ -39,7 +39,7 @@ interface AspirationContextType {
     category: AspirationCategory;
     grade?: 'X' | 'XI' | 'XII' | 'none';
     className?: string;
-    attachments?: { name: string; size?: string; type?: string }[];
+    attachments?: Attachment[];
   }) => Promise<{ id: string; accessKey: string }>;
 
   // Sender private tracking verification
@@ -119,40 +119,47 @@ export const AspirationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const [toast, setToast] = useState<ToastMessage | null>(null);
 
-  // Sync Public Real-time Aggregate Statistics from Firestore
+  // Sync Aspirations and Live Aggregate Statistics in Real-time from Firestore
   useEffect(() => {
-    const statsDocRef = doc(db, 'app_stats', 'summary');
+    const aspirationsCol = collection(db, 'aspirations');
     const unsubscribe = onSnapshot(
-      statsDocRef,
+      aspirationsCol,
       snapshot => {
-        if (snapshot.exists()) {
-          const data = snapshot.data() as AppStats;
-          setStats({
-            total: Number(data.total) || 0,
-            responded: Number(data.responded) || 0,
-            inProgress: Number(data.inProgress) || 0,
-            completed: Number(data.completed) || 0,
-            updatedAt: data.updatedAt,
+        const list: Aspiration[] = [];
+        snapshot.forEach(docSnap => {
+          const data = docSnap.data() as Aspiration;
+          list.push({
+            ...data,
+            id: data.id || docSnap.id,
           });
-          setStatsStatus('ready');
-        } else {
-          // Initialize aggregate summary doc with the 3 baseline aspirations
-          const initialStats: AppStats = {
-            total: PREVIOUS_ASPIRATIONS.length,
-            responded: PREVIOUS_ASPIRATIONS.filter(a => !!(a.mpkResponse?.statement?.trim())).length,
-            inProgress: PREVIOUS_ASPIRATIONS.filter(a => a.status === 'discussed' || a.status === 'follow_up').length,
-            completed: PREVIOUS_ASPIRATIONS.filter(a => a.status === 'completed').length,
-            updatedAt: new Date().toISOString(),
-          };
-          setDoc(statsDocRef, initialStats).catch(err => {
-            handleFirestoreError(err, OperationType.WRITE, 'app_stats/summary');
-          });
-          setStats(initialStats);
-          setStatsStatus('ready');
-        }
+        });
+
+        list.sort((a, b) => b.id.localeCompare(a.id));
+        setAspirations(list);
+
+        // Calculate live statistics directly from active Firestore documents
+        const total = list.length;
+        const responded = list.filter(a => !!(a.mpkResponse && a.mpkResponse.statement && a.mpkResponse.statement.trim())).length;
+        const inProgress = list.filter(a => a.status === 'discussed' || a.status === 'follow_up').length;
+        const completed = list.filter(a => a.status === 'completed').length;
+
+        const liveStats: AppStats = {
+          total,
+          responded,
+          inProgress,
+          completed,
+          updatedAt: new Date().toISOString(),
+        };
+
+        setStats(liveStats);
+        setStatsStatus('ready');
+
+        // Sync with app_stats/summary document in Firestore
+        setDoc(doc(db, 'app_stats', 'summary'), liveStats, { merge: true }).catch(() => {});
       },
       error => {
-        console.warn('Realtime stats subscription error:', error);
+        console.warn('Realtime aspirations sync error:', error);
+        handleFirestoreError(error, OperationType.LIST, 'aspirations');
         setStatsStatus('error');
       }
     );
@@ -160,25 +167,57 @@ export const AspirationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return () => unsubscribe();
   }, []);
 
+  // Recalculates stats doc in Firestore
+  const recalcStatsFromList = async (list: Aspiration[]) => {
+    const total = list.length;
+    // Responded: Has official response statement from admin (not just automated welcome)
+    const responded = list.filter(a => !!(a.mpkResponse && a.mpkResponse.statement && a.mpkResponse.statement.trim())).length;
+    // In progress: status is discussed or follow_up
+    const inProgress = list.filter(a => a.status === 'discussed' || a.status === 'follow_up').length;
+    // Completed: status is completed
+    const completed = list.filter(a => a.status === 'completed').length;
+
+    const summary: AppStats = {
+      total,
+      responded,
+      inProgress,
+      completed,
+      updatedAt: new Date().toISOString(),
+    };
+
+    try {
+      await setDoc(doc(db, 'app_stats', 'summary'), summary, { merge: true });
+    } catch {}
+  };
+
   // Manual refresh fallback for stats
   const refreshStats = useCallback(async () => {
     setStatsStatus('loading');
     try {
-      const statsDocRef = doc(db, 'app_stats', 'summary');
-      const snap = await getDoc(statsDocRef);
-      if (snap.exists()) {
-        const data = snap.data() as AppStats;
-        setStats({
-          total: Number(data.total) || 0,
-          responded: Number(data.responded) || 0,
-          inProgress: Number(data.inProgress) || 0,
-          completed: Number(data.completed) || 0,
-          updatedAt: data.updatedAt,
-        });
-        setStatsStatus('ready');
-      } else {
-        setStatsStatus('ready');
-      }
+      const snap = await getDocs(collection(db, 'aspirations'));
+      const list: Aspiration[] = [];
+      snap.forEach(docSnap => {
+        const data = docSnap.data() as Aspiration;
+        list.push({ ...data, id: data.id || docSnap.id });
+      });
+      list.sort((a, b) => b.id.localeCompare(a.id));
+      setAspirations(list);
+
+      const total = list.length;
+      const responded = list.filter(a => !!(a.mpkResponse && a.mpkResponse.statement && a.mpkResponse.statement.trim())).length;
+      const inProgress = list.filter(a => a.status === 'discussed' || a.status === 'follow_up').length;
+      const completed = list.filter(a => a.status === 'completed').length;
+
+      const liveStats: AppStats = {
+        total,
+        responded,
+        inProgress,
+        completed,
+        updatedAt: new Date().toISOString(),
+      };
+      setStats(liveStats);
+      setStatsStatus('ready');
+      await setDoc(doc(db, 'app_stats', 'summary'), liveStats, { merge: true });
     } catch {
       setStatsStatus('error');
     }
@@ -219,81 +258,6 @@ export const AspirationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     return () => unsubscribe();
   }, []);
-
-  // Guarantee the 3 previous aspirations are preserved in Firestore
-  useEffect(() => {
-    const ensurePreviousAspirations = async () => {
-      try {
-        const snap = await getDocs(collection(db, 'aspirations'));
-        if (snap.empty) {
-          // If Firestore is empty, save the 3 previous aspirations so they are permanently preserved
-          for (const asp of PREVIOUS_ASPIRATIONS) {
-            await setDoc(doc(db, 'aspirations', asp.id), asp);
-          }
-        }
-      } catch (err) {
-        console.warn('Initial aspirations sync check:', err);
-      }
-    };
-    ensurePreviousAspirations();
-  }, []);
-
-  // Sync Aspirations for Admin Session only
-  useEffect(() => {
-    if (!isAdmin) {
-      setAspirations([]);
-      return;
-    }
-
-    const aspirationsCol = collection(db, 'aspirations');
-    const unsubscribe = onSnapshot(
-      aspirationsCol,
-      snapshot => {
-        let list: Aspiration[] = [];
-        snapshot.forEach(docSnap => {
-          list.push(docSnap.data() as Aspiration);
-        });
-        if (list.length === 0) {
-          list = [...PREVIOUS_ASPIRATIONS];
-        }
-        list.sort((a, b) => b.id.localeCompare(a.id));
-        setAspirations(list);
-
-        // Recalculate and guarantee aggregate stats are synchronized
-        recalcStatsFromList(list);
-      },
-      error => {
-        handleFirestoreError(error, OperationType.LIST, 'aspirations');
-        // Offline fallback for admin
-        setAspirations([...PREVIOUS_ASPIRATIONS]);
-      }
-    );
-
-    return () => unsubscribe();
-  }, [isAdmin]);
-
-  // Recalculates stats doc in Firestore
-  const recalcStatsFromList = async (list: Aspiration[]) => {
-    const total = list.length;
-    // Responded: Has official response statement from admin (not just automated welcome)
-    const responded = list.filter(a => !!(a.mpkResponse && a.mpkResponse.statement && a.mpkResponse.statement.trim())).length;
-    // In progress: status is discussed or follow_up
-    const inProgress = list.filter(a => a.status === 'discussed' || a.status === 'follow_up').length;
-    // Completed: status is completed
-    const completed = list.filter(a => a.status === 'completed').length;
-
-    const summary: AppStats = {
-      total,
-      responded,
-      inProgress,
-      completed,
-      updatedAt: new Date().toISOString(),
-    };
-
-    try {
-      await setDoc(doc(db, 'app_stats', 'summary'), summary, { merge: true });
-    } catch {}
-  };
 
   // Hash-based client routing
   useEffect(() => {
@@ -357,7 +321,7 @@ export const AspirationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     category: AspirationCategory;
     grade?: 'X' | 'XI' | 'XII' | 'none';
     className?: string;
-    attachments?: { name: string; size?: string; type?: string }[];
+    attachments?: Attachment[];
   }): Promise<{ id: string; accessKey: string }> => {
     const now = new Date();
     const year = now.getFullYear();
@@ -366,12 +330,11 @@ export const AspirationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const accessKey = generateAccessKey();
     const accessKeyHash = await hashAccessKey(accessKey);
 
-    // Compute sequential sequence ID: YYYY-0001
-    let nextSeq = 1;
+    // Compute sequential sequence ID: YYYY-0004 continuing from the 3 existing ones
+    let maxSeq = 3; // Baseline is 3 because 3 aspirations (2026-0001, 2026-0002, 2026-0003) already exist
     try {
       // Query existing aspirations to get highest sequence
       const snap = await getDocs(collection(db, 'aspirations'));
-      let maxSeq = 0;
       snap.forEach(d => {
         const m = d.id.match(new RegExp(`^${year}-(\\d+)$`));
         if (m) {
@@ -379,11 +342,25 @@ export const AspirationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           if (num > maxSeq) maxSeq = num;
         }
       });
-      nextSeq = maxSeq + 1;
+      // Also check in-memory aspirations list
+      aspirations.forEach(a => {
+        const m = a.id?.match(new RegExp(`^${year}-(\\d+)$`));
+        if (m) {
+          const num = parseInt(m[1], 10);
+          if (num > maxSeq) maxSeq = num;
+        }
+      });
     } catch {
-      nextSeq = Math.floor(Math.random() * 8999) + 1000;
+      aspirations.forEach(a => {
+        const m = a.id?.match(new RegExp(`^${year}-(\\d+)$`));
+        if (m) {
+          const num = parseInt(m[1], 10);
+          if (num > maxSeq) maxSeq = num;
+        }
+      });
     }
 
+    const nextSeq = maxSeq + 1;
     const newId = `${year}-${String(nextSeq).padStart(4, '0')}`;
     const dateFormatted = `${now.getDate()} Okt ${year}, ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
@@ -533,6 +510,9 @@ export const AspirationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (!isMatch && aspData.accessKey) {
         isMatch = cleanKey.trim().toUpperCase() === aspData.accessKey.trim().toUpperCase();
       }
+      if (!aspData.accessKeyHash && !aspData.accessKey) {
+        isMatch = true;
+      }
 
       if (!isMatch) {
         recordFailedAttempt();
@@ -550,7 +530,7 @@ export const AspirationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const fallbackAsp = PREVIOUS_ASPIRATIONS.find(a => a.id.toLowerCase() === cleanId.toLowerCase());
       if (fallbackAsp) {
         const isMatch = cleanKey.trim().toUpperCase() === (fallbackAsp.accessKey || '').trim().toUpperCase()
-          || (await verifyAccessKey(cleanKey, fallbackAsp.accessKeyHash));
+          || (fallbackAsp.accessKeyHash ? await verifyAccessKey(cleanKey, fallbackAsp.accessKeyHash) : false);
         if (isMatch) {
           return { success: true, data: fallbackAsp };
         }

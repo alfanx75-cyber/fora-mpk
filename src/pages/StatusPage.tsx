@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAspirations } from '../context/AspirationContext';
 import { STATUS_MAP, SCHOOL_NAME } from '../data/mockData';
-import { Aspiration, AspirationStatus } from '../types';
+import { Aspiration, AspirationStatus, Attachment } from '../types';
+import { isImageAttachment } from '../utils/fileHelper';
+import { AttachmentModal } from '../components/AttachmentModal';
 import {
   Search,
   Lock,
@@ -11,7 +13,10 @@ import {
   AlertTriangle,
   RotateCw,
   KeyRound,
-  FileCheck
+  FileCheck,
+  Eye,
+  Image as ImageIcon,
+  FileText
 } from 'lucide-react';
 
 export const StatusPage: React.FC = () => {
@@ -25,6 +30,7 @@ export const StatusPage: React.FC = () => {
 
   // Verified Tracking Data (Single Private Ticket)
   const [trackedAspiration, setTrackedAspiration] = useState<Aspiration | null>(null);
+  const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null);
 
   // Check if sender just arrived from successful submission
   useEffect(() => {
@@ -211,7 +217,7 @@ export const StatusPage: React.FC = () => {
           </div>
 
           {/* Safe Process Note for Sender (Requirement 5) */}
-          <div className="p-4 sm:p-5 bg-[#FCFBF5] border-[2px] border-[#111111] rounded-2xl mb-8 shadow-[2px_2px_0px_#111111]">
+          <div className="p-4 sm:p-5 bg-[#FCFBF5] border-[2px] border-[#111111] rounded-2xl mb-6 shadow-[2px_2px_0px_#111111]">
             <div className="flex items-center gap-2 mb-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-[#e01376]" />
               <span className="font-['Space_Grotesk'] text-xs font-black uppercase text-[#111111]">
@@ -223,6 +229,73 @@ export const StatusPage: React.FC = () => {
                 'Aspirasimu sedang dalam antrean verifikasi Komisi 3 (KOASITER) MPK.'}
             </p>
           </div>
+
+          {/* Aspiration Content Summary */}
+          <div className="p-4 sm:p-5 bg-[#FFFFFF] border-[2px] border-[#111111] rounded-2xl mb-6 shadow-[2px_2px_0px_#111111]">
+            <span className="font-['Space_Grotesk'] text-[10px] sm:text-xs font-black uppercase text-[#0051d5] tracking-wider block mb-1">
+              ASPIRASI YANG ANDA KIRIM:
+            </span>
+            <h3 className="font-['Space_Grotesk'] text-base sm:text-lg font-black text-[#111111]">
+              {trackedAspiration.title}
+            </h3>
+            <p className="font-['Plus_Jakarta_Sans'] text-xs sm:text-sm text-[#111111]/90 font-medium mt-1 leading-relaxed whitespace-pre-line">
+              {trackedAspiration.description}
+            </p>
+          </div>
+
+          {/* Uploaded Attachments / Photos Section */}
+          {trackedAspiration.attachments && trackedAspiration.attachments.length > 0 && (
+            <div className="p-4 sm:p-5 bg-[#FCFBF5] border-[2px] border-[#111111] rounded-2xl mb-8 shadow-[2px_2px_0px_#111111]">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#21D99A]" />
+                <h4 className="font-['Space_Grotesk'] text-xs font-black uppercase text-[#111111]">
+                  BERKAS LAMPIRAN & FOTO YANG DIUNGGAH ({trackedAspiration.attachments.length}):
+                </h4>
+              </div>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                {trackedAspiration.attachments.map((att, idx) => {
+                  const isImg = isImageAttachment(att);
+                  const mediaUrl = att.dataUrl || att.previewUrl;
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => setPreviewAttachment(att)}
+                      className="inline-flex items-center gap-2.5 p-2 pr-3 bg-white hover:bg-[#fde029]/20 border-[2px] border-[#111111] rounded-xl text-xs font-bold shadow-[2px_2px_0px_#111111] cursor-pointer transition-all hover:-translate-y-0.5 active:translate-y-0 group"
+                      title="Klik untuk membuka dan melihat foto lampiran"
+                    >
+                      {isImg && mediaUrl ? (
+                        <img
+                          src={mediaUrl}
+                          alt={att.name}
+                          className="w-10 h-10 rounded-lg object-cover border border-[#111111] shrink-0 bg-white"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-[#FCFBF5] border border-[#111111] flex items-center justify-center shrink-0">
+                          {isImg ? (
+                            <ImageIcon className="w-5 h-5 text-[#e01376]" />
+                          ) : (
+                            <FileText className="w-5 h-5 text-[#0051d5]" />
+                          )}
+                        </div>
+                      )}
+                      <div className="overflow-hidden max-w-[170px] sm:max-w-[220px]">
+                        <span className="font-['Space_Grotesk'] text-xs font-bold text-[#111111] block truncate group-hover:text-[#0051d5]">
+                          {att.name}
+                        </span>
+                        <span className="font-mono text-[10px] text-[#5a3f47]">
+                          {att.size || (isImg ? 'Foto' : 'Dokumen')}
+                        </span>
+                      </div>
+                      <span className="px-2 py-1 bg-[#fde029] group-hover:bg-[#ffe340] border border-[#111111] rounded text-[10px] font-black uppercase flex items-center gap-1 ml-1 shrink-0 shadow-[1px_1px_0px_#111111]">
+                        <Eye className="w-3 h-3 text-[#111111]" />
+                        <span>Buka</span>
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* 5-Step Visual Stepper: DIKIRIM -> DITERIMA -> DIBAHAS -> DITINDAKLANJUTI -> SELESAI */}
           <div className="mb-8 sm:mb-10">
@@ -347,6 +420,14 @@ export const StatusPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Attachment Preview Modal */}
+      <AttachmentModal
+        attachment={previewAttachment}
+        ticketId={trackedAspiration?.id}
+        ticketTitle={trackedAspiration?.title}
+        onClose={() => setPreviewAttachment(null)}
+      />
     </div>
   );
 };

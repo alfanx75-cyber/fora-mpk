@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useAspirations } from '../context/AspirationContext';
 import { CATEGORIES, STATUS_MAP, SCHOOL_CLASSES, SCHOOL_NAME } from '../data/mockData';
-import { AspirationCategory, AspirationStatus, MPKResponse } from '../types';
+import { AspirationCategory, AspirationStatus, MPKResponse, Attachment } from '../types';
 import { CategoryIcon } from '../components/CategoryIcon';
+import { isImageAttachment } from '../utils/fileHelper';
+import { AttachmentModal } from '../components/AttachmentModal';
 import {
   Lock,
   LogOut,
@@ -18,7 +20,9 @@ import {
   Shield,
   FileText,
   UserCheck,
-  ChevronDown
+  ChevronDown,
+  Eye,
+  Image as ImageIcon
 } from 'lucide-react';
 
 export const AdminPage: React.FC = () => {
@@ -51,6 +55,13 @@ export const AdminPage: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterClass, setFilterClass] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Attachment Modal preview state
+  const [viewAttachment, setViewAttachment] = useState<{
+    attachment: Attachment;
+    ticketId?: string;
+    ticketTitle?: string;
+  } | null>(null);
 
   // Modal response state
   const [selectedAspId, setSelectedAspId] = useState<string | null>(null);
@@ -141,7 +152,7 @@ export const AdminPage: React.FC = () => {
     if (filterCategory !== 'all' && a.category !== filterCategory) return false;
     if (filterStatus !== 'all' && a.status !== filterStatus) return false;
     if (filterClass !== 'all') {
-      if (filterClass === 'none' && a.className !== 'Tidak ingin menyebutkan kelas') return false;
+      if (filterClass === 'none' && a.className !== 'Tidak ingin menyebutkan kelas' && a.className !== 'Rahasia') return false;
       if (filterClass.startsWith('grade_')) {
         const targetGrade = filterClass.replace('grade_', '');
         if (a.grade !== targetGrade) return false;
@@ -220,6 +231,13 @@ export const AdminPage: React.FC = () => {
               Masuk Dashboard Admin →
             </button>
           </form>
+
+          <div className="mt-4 p-2.5 bg-[#fef9c3] border border-[#111111] rounded-xl text-left flex items-start gap-2 shadow-[2px_2px_0px_#111111]">
+            <KeyRound className="w-4 h-4 text-[#854d0e] mt-0.5 shrink-0" />
+            <div className="text-[11px] font-['Space_Grotesk'] text-[#854d0e] leading-snug">
+              <span className="font-black">Akun Pengurus MPK:</span> Username <code className="bg-[#fde029] px-1 py-0.5 rounded font-black text-[#111111]">admin_mpk</code> | Password <code className="bg-[#fde029] px-1 py-0.5 rounded font-black text-[#111111]">mpk2026</code>
+            </div>
+          </div>
 
           <div className="mt-6 pt-4 border-t border-[#111111]/20">
             <button
@@ -450,17 +468,63 @@ export const AdminPage: React.FC = () => {
 
               {/* Attachments preview if any */}
               {asp.attachments && asp.attachments.length > 0 && (
-                <div className="flex items-center gap-2 flex-wrap pt-1">
-                  <span className="text-[11px] font-bold text-[#5a3f47]">Lampiran:</span>
-                  {asp.attachments.map((att, i) => (
-                    <span
-                      key={i}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#FCFBF5] border border-[#111111] rounded text-[10px] font-bold"
-                    >
-                      <FileText className="w-3 h-3" />
-                      {att.name}
+                <div className="pt-2 border-t border-[#111111]/15">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[#e01376]" />
+                    <span className="text-[11px] font-['Space_Grotesk'] font-black uppercase text-[#111111]">
+                      Lampiran Berkas Siswa ({asp.attachments.length}):
                     </span>
-                  ))}
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {asp.attachments.map((att, i) => {
+                      const isImg = isImageAttachment(att);
+                      const mediaUrl = att.dataUrl || att.previewUrl;
+                      return (
+                        <div
+                          key={i}
+                          onClick={() =>
+                            setViewAttachment({
+                              attachment: att,
+                              ticketId: asp.id,
+                              ticketTitle: asp.title,
+                            })
+                          }
+                          className="inline-flex items-center gap-2 p-1.5 pr-2.5 bg-[#FFFFFF] hover:bg-[#fde029]/20 border-[1.5px] border-[#111111] rounded-xl text-xs font-bold shadow-[2px_2px_0px_#111111] cursor-pointer transition-all hover:-translate-y-0.5 active:translate-y-0 group"
+                          title="Klik untuk membuka & memperbesar lampiran"
+                        >
+                          {isImg && mediaUrl ? (
+                            <img
+                              src={mediaUrl}
+                              alt={att.name}
+                              className="w-8 h-8 rounded-lg object-cover border border-[#111111] shrink-0 bg-white"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-lg bg-[#FCFBF5] border border-[#111111] flex items-center justify-center shrink-0">
+                              {isImg ? (
+                                <ImageIcon className="w-4 h-4 text-[#e01376]" />
+                              ) : (
+                                <FileText className="w-4 h-4 text-[#0051d5]" />
+                              )}
+                            </div>
+                          )}
+
+                          <div className="overflow-hidden max-w-[170px] sm:max-w-[200px]">
+                            <span className="font-['Space_Grotesk'] text-[11px] font-black text-[#111111] truncate block group-hover:text-[#0051d5]">
+                              {att.name}
+                            </span>
+                            <span className="font-mono text-[9px] text-[#5a3f47] block">
+                              {att.size || (isImg ? 'Foto' : 'Dokumen')}
+                            </span>
+                          </div>
+
+                          <span className="ml-0.5 px-2 py-0.5 bg-[#fde029] group-hover:bg-[#ffe340] border border-[#111111] rounded text-[10px] font-black uppercase flex items-center gap-1 shrink-0 shadow-[1px_1px_0px_#111111]">
+                            <Eye className="w-3 h-3 text-[#111111]" />
+                            <span>Buka</span>
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
@@ -677,6 +741,13 @@ export const AdminPage: React.FC = () => {
           </div>
         </div>
       )}
+      {/* Attachment Preview Lightbox Modal */}
+      <AttachmentModal
+        attachment={viewAttachment?.attachment || null}
+        ticketId={viewAttachment?.ticketId}
+        ticketTitle={viewAttachment?.ticketTitle}
+        onClose={() => setViewAttachment(null)}
+      />
     </div>
   );
 };

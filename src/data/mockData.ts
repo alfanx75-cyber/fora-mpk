@@ -227,7 +227,7 @@ export const PREVIOUS_ASPIRATIONS: Aspiration[] = [
     createdAt: '05 Okt 2026, 09:15',
     updatedAt: '08 Okt 2026, 14:30',
     attachments: [
-      { name: 'foto_ac_lab_komputer.jpg', size: '1.8 MB', type: 'image/jpeg' },
+      { name: 'foto_ac_lab_komputer.jpg', size: '37 KB', type: 'image/jpeg', previewUrl: '/foto_ac_lab_komputer.jpg' },
     ],
     senderProcessNote: 'Nota dinas permohonan servis teknisi telah disampaikan ke Wakasek Sarana & Prasarana. Teknisi servis dijadwalkan hadir minggu ini.',
     adminInternalNotes: 'Koordinasi dengan Pak Sugeng (Sarpras). Suku cadang filter dan isi freon sudah diajukan dalam anggaran pemeliharaan bulanan.',

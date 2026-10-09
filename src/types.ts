@@ -52,11 +52,12 @@ export interface Attachment {
   size?: string;
   type?: string;
   previewUrl?: string;
+  dataUrl?: string;
 }
 
 export interface Aspiration {
   id: string; // e.g. "2026-0001"
-  accessKeyHash: string; // SHA-256 hash of secret access key
+  accessKeyHash?: string; // SHA-256 hash of secret access key
   accessKey?: string; // Cleartext access code (only available at submission confirmation or for authorized admin)
   title: string;
   description: string;

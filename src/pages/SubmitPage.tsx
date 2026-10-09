@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useAspirations } from '../context/AspirationContext';
 import { CATEGORIES, SCHOOL_CLASSES, SCHOOL_NAME } from '../data/mockData';
-import { AspirationCategory } from '../types';
+import { AspirationCategory, Attachment } from '../types';
 import { CategoryIcon } from '../components/CategoryIcon';
+import { fileToAttachment, isImageAttachment } from '../utils/fileHelper';
+import { AttachmentModal } from '../components/AttachmentModal';
 import {
   CheckCircle2,
   Paperclip,
@@ -14,7 +16,10 @@ import {
   Download,
   SearchCheck,
   Lock,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  Trash2,
+  Image as ImageIcon
 } from 'lucide-react';
 
 export const SubmitPage: React.FC = () => {
@@ -26,7 +31,9 @@ export const SubmitPage: React.FC = () => {
   const [specificClass, setSpecificClass] = useState<string>('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [files, setFiles] = useState<{ name: string; size: string; type: string }[]>([]);
+  const [files, setFiles] = useState<Attachment[]>([]);
+  const [isProcessingFiles, setIsProcessingFiles] = useState(false);
+  const [previewModalAttachment, setPreviewModalAttachment] = useState<Attachment | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   // Submission States
@@ -43,27 +50,35 @@ export const SubmitPage: React.FC = () => {
     setIsDragging(false);
   };
 
+  const processFiles = async (selected: FileList | File[]) => {
+    setIsProcessingFiles(true);
+    try {
+      const newAttachments: Attachment[] = [];
+      for (const f of Array.from(selected)) {
+        const att = await fileToAttachment(f);
+        newAttachments.push(att);
+      }
+      setFiles(prev => [...prev, ...newAttachments]);
+    } catch (err) {
+      console.error('Gagal memproses lampiran:', err);
+      showToast('Gagal Memproses Berkas', 'File tidak dapat diproses ke sistem.', undefined, 'error');
+    } finally {
+      setIsProcessingFiles(false);
+    }
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const droppedFiles = Array.from(e.dataTransfer.files).map(f => ({
-        name: f.name,
-        size: `${(f.size / (1024 * 1024)).toFixed(1)} MB`,
-        type: f.type.includes('image') ? 'image' : 'doc',
-      }));
-      setFiles(prev => [...prev, ...droppedFiles]);
+      processFiles(e.dataTransfer.files);
     }
   };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const selectedFiles = Array.from(e.target.files).map(f => ({
-        name: f.name,
-        size: `${(f.size / (1024 * 1024)).toFixed(1)} MB`,
-        type: f.type.includes('image') ? 'image' : 'doc',
-      }));
-      setFiles(prev => [...prev, ...selectedFiles]);
+      processFiles(e.target.files);
+      e.target.value = '';
     }
   };
 
@@ -497,31 +512,77 @@ export const SubmitPage: React.FC = () => {
               </label>
             </div>
 
+            {/* Processing Indicator */}
+            {isProcessingFiles && (
+              <div className="mt-2.5 p-3 bg-[#fde029]/20 border-[2px] border-[#111111] rounded-xl flex items-center gap-2.5 text-xs font-bold text-[#111111] animate-pulse">
+                <Loader2 className="w-4 h-4 animate-spin text-[#0051d5]" />
+                <span>Sedang membaca dan mengoptimalkan ukuran foto...</span>
+              </div>
+            )}
+
             {/* Uploaded Files List */}
             {files.length > 0 && (
               <div className="mt-2.5 space-y-2">
-                {files.map((file, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between p-2 sm:p-2.5 bg-[#FFFFFF] border-[2px] border-[#111111] rounded-xl shadow-[2px_2px_0px_#111111]"
-                  >
-                    <div className="flex items-center gap-2 overflow-hidden">
-                      <FileText className="w-4 h-4 text-[#111111] shrink-0" />
-                      <span className="font-['Space_Grotesk'] text-xs font-bold text-[#111111] truncate">
-                        {file.name}
-                      </span>
-                      <span className="text-[10px] text-[#5a3f47]">({file.size})</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeFile(idx)}
-                      className="p-1 text-[#ba1a1a] hover:bg-[#ffdad6] rounded-md transition-colors"
-                      title="Hapus berkas"
+                {files.map((file, idx) => {
+                  const isImg = isImageAttachment(file);
+                  return (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-2 sm:p-2.5 bg-[#FFFFFF] border-[2px] border-[#111111] rounded-xl shadow-[2px_2px_0px_#111111] gap-2"
                     >
-                      <span className="material-symbols-outlined text-base">delete</span>
-                    </button>
-                  </div>
-                ))}
+                      <div className="flex items-center gap-2.5 overflow-hidden flex-1 min-w-0">
+                        {isImg && file.dataUrl ? (
+                          <img
+                            src={file.dataUrl}
+                            alt={file.name}
+                            className="w-10 h-10 object-cover rounded-lg border border-[#111111] shrink-0 bg-white"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-[#FCFBF5] border border-[#111111] flex items-center justify-center shrink-0">
+                            {isImg ? (
+                              <ImageIcon className="w-5 h-5 text-[#111111]" />
+                            ) : (
+                              <FileText className="w-5 h-5 text-[#111111]" />
+                            )}
+                          </div>
+                        )}
+                        <div className="overflow-hidden min-w-0">
+                          <span className="font-['Space_Grotesk'] text-xs font-bold text-[#111111] truncate block">
+                            {file.name}
+                          </span>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="font-mono text-[10px] text-[#5a3f47] font-semibold">
+                              {file.size}
+                            </span>
+                            <span className="text-[9px] font-bold uppercase px-1.5 py-0.2 bg-[#21D99A]/30 border border-[#111111] rounded text-[#111111]">
+                              {isImg ? 'Foto' : 'Dokumen'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setPreviewModalAttachment(file)}
+                          className="px-2.5 py-1 bg-[#FCFBF5] hover:bg-[#fde029] border border-[#111111] rounded-lg text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer shadow-[1px_1px_0px_#111111]"
+                          title="Buka pratinjau lampiran"
+                        >
+                          <Eye className="w-3.5 h-3.5 text-[#111111]" />
+                          <span className="hidden sm:inline text-[11px]">Lihat</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeFile(idx)}
+                          className="p-1 text-[#ba1a1a] hover:bg-[#ffdad6] border border-transparent hover:border-[#ba1a1a] rounded-lg transition-colors cursor-pointer"
+                          title="Hapus berkas"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -546,6 +607,12 @@ export const SubmitPage: React.FC = () => {
           </button>
         </form>
       </div>
+
+      {/* Attachment Preview Modal */}
+      <AttachmentModal
+        attachment={previewModalAttachment}
+        onClose={() => setPreviewModalAttachment(null)}
+      />
     </div>
   );
 };
