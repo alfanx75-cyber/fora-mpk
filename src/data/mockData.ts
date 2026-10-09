@@ -23,7 +23,6 @@ export const CATEGORIES: CategoryInfo[] = [
   { id: 'kantin', name: 'Kantin', icon: 'kantin', bgColor: '#ffe340' },
   { id: 'akademik', name: 'Akademik', icon: 'akademik', bgColor: '#dbe1ff' },
   { id: 'event', name: 'Event & Ekskul', icon: 'event', bgColor: '#ffd9e1' },
-  { id: 'transportasi', name: 'Transportasi', icon: 'transportasi', bgColor: '#ffb1c6' },
   { id: 'kebersihan', name: 'Kebersihan', icon: 'kebersihan', bgColor: '#21D99A' },
   { id: 'ide_baru', name: 'Ide Baru', icon: 'ide_baru', bgColor: '#ffe340' },
   { id: 'lainnya', name: 'Lainnya', icon: 'lainnya', bgColor: '#dbe1ff' },

@@ -27,7 +27,7 @@ export const SubmitPage: React.FC = () => {
 
   // Form Fields
   const [category, setCategory] = useState<AspirationCategory>('fasilitas');
-  const [gradeChoice, setGradeChoice] = useState<'none' | 'X' | 'XI' | 'XII'>('none');
+  const [gradeChoice, setGradeChoice] = useState<'X' | 'XI' | 'XII' | ''>('');
   const [specificClass, setSpecificClass] = useState<string>('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -89,8 +89,10 @@ export const SubmitPage: React.FC = () => {
   const validate = () => {
     const errs: { title?: string; description?: string; class?: string } = {};
 
-    if (gradeChoice !== 'none' && !specificClass) {
-      errs.class = `Silakan pilih kelas dari daftar tingkat ${gradeChoice}.`;
+    if (!gradeChoice) {
+      errs.class = 'Silakan pilih tingkat kelas (X, XI, atau XII).';
+    } else if (!specificClass) {
+      errs.class = `Silakan pilih kelas resmi dari daftar tingkat ${gradeChoice}.`;
     }
 
     if (!title.trim()) {
@@ -116,13 +118,13 @@ export const SubmitPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const finalClassName = gradeChoice === 'none' ? 'Tidak ingin menyebutkan kelas' : specificClass;
+      const finalClassName = specificClass;
 
       const result = await submitAspiration({
         title: title.trim(),
         description: description.trim(),
         category,
-        grade: gradeChoice,
+        grade: (gradeChoice || 'X') as 'none' | 'X' | 'XI' | 'XII',
         className: finalClassName,
         attachments: files,
       });
@@ -173,7 +175,7 @@ export const SubmitPage: React.FC = () => {
   const resetForm = () => {
     setTitle('');
     setDescription('');
-    setGradeChoice('none');
+    setGradeChoice('');
     setSpecificClass('');
     setFiles([]);
     setSuccessData(null);
@@ -369,9 +371,8 @@ export const SubmitPage: React.FC = () => {
             </p>
 
             {/* Tingkat Radio Buttons */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+            <div className="grid grid-cols-3 gap-2 pt-1">
               {[
-                { id: 'none', label: 'Tidak ingin menyebutkan kelas' },
                 { id: 'X', label: 'Tingkat X' },
                 { id: 'XI', label: 'Tingkat XI' },
                 { id: 'XII', label: 'Tingkat XII' },
@@ -386,7 +387,7 @@ export const SubmitPage: React.FC = () => {
                       setSpecificClass('');
                       if (errors.class) setErrors(prev => ({ ...prev, class: undefined }));
                     }}
-                    className={`px-3 py-2.5 rounded-xl border-[2px] border-[#111111] font-['Space_Grotesk'] text-[11px] font-bold text-center transition-all cursor-pointer ${
+                    className={`px-3 py-2.5 rounded-xl border-[2px] border-[#111111] font-['Space_Grotesk'] text-xs font-bold text-center transition-all cursor-pointer ${
                       active
                         ? 'bg-[#fde029] text-[#111111] shadow-[2px_2px_0px_#111111]'
                         : 'bg-white text-[#5a3f47] hover:bg-[#f0edec]'
@@ -398,8 +399,14 @@ export const SubmitPage: React.FC = () => {
               })}
             </div>
 
+            {!gradeChoice && errors.class && (
+              <p className="mt-1 font-['Plus_Jakarta_Sans'] text-[11px] font-bold text-[#ba1a1a]">
+                {errors.class}
+              </p>
+            )}
+
             {/* Specific Class Dropdown (Required if a grade is picked) */}
-            {gradeChoice !== 'none' && (
+            {gradeChoice && (
               <div className="pt-2 animate-[popModal_0.2s_ease-out_forwards]">
                 <label className="block font-['Space_Grotesk'] text-[10px] sm:text-[11px] font-bold uppercase text-[#111111] mb-1.5">
                   Pilih Kelas Resmi di Tingkat {gradeChoice} <span className="text-[#0ea5e9]">*</span>
@@ -415,7 +422,7 @@ export const SubmitPage: React.FC = () => {
                   }`}
                 >
                   <option value="">-- Pilih Kelas {gradeChoice} Resmi --</option>
-                  {SCHOOL_CLASSES[gradeChoice].map(cls => (
+                  {SCHOOL_CLASSES[gradeChoice as 'X' | 'XI' | 'XII'].map(cls => (
                     <option key={cls} value={cls}>
                       {cls}
                     </option>
