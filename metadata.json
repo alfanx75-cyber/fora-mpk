@@ -1,6 +1,6 @@
 {
-  "name": "FORA — Platform Aspirasi MPK",
-  "description": "Platform aspirasi digital interaktif Majelis Perwakilan Kelas (MPK). Suaramu bukan cuma masuk form, suaramu bergerak.",
+  "name": "FORA — Ruang Aspirasi Siswa · MPK SMAN 1 Kebumen",
+  "description": "Platform aspirasi digital privat dan transparan Majelis Perwakilan Kelas (MPK) SMA Negeri 1 Kebumen. Suaramu terlindungi dan terpantau secara privat.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -1,8 +1,21 @@
 import { Aspiration, AspirationCategory, CategoryInfo, StatusInfo } from '../types';
 
+export const SCHOOL_NAME = "SMA Negeri 1 Kebumen";
+export const SCHOOL_SHORT = "SMAN 1 Kebumen";
+export const SCHOOL_LOGO = "/logo_sman1kebumen.png";
+export const MPK_LOGO = "/logo_mpk.png";
+
 export const MPK_INSTAGRAM_URL = "https://www.instagram.com/mpk_sman1kebumen?stkn=bHZhbGltdjMxYzZh";
 export const MPK_INSTAGRAM_HANDLE = "@mpk_sman1kebumen";
+export const SMANSA_OFFICIAL_INSTAGRAM_URL = "https://www.instagram.com/official.sman1kebumen?rpxt=N2ZyOTQ5ZjR6NGtl";
 export const MPK_EMAIL = "mpksmanegeri1kebumen@gmail.com";
+
+// Official class list for SMA Negeri 1 Kebumen
+export const SCHOOL_CLASSES = {
+  X: ['X A', 'X B', 'X C', 'X D', 'X E', 'X F', 'X G', 'X H', 'X I', 'X J', 'X K'],
+  XI: ['XI A', 'XI B', 'XI C', 'XI D', 'XI E', 'XI F', 'XI G', 'XI H', 'XI I', 'XI J', 'XI K'],
+  XII: ['XII A', 'XII B', 'XII C', 'XII D', 'XII E', 'XII F', 'XII G', 'XII H', 'XII I', 'XII J', 'XII K'],
+};
 
 export const CATEGORIES: CategoryInfo[] = [
   { id: 'fasilitas', name: 'Fasilitas', icon: 'fasilitas', bgColor: '#ffd9e1' },
@@ -68,9 +81,6 @@ export const STATUS_MAP: Record<string, StatusInfo> = {
   },
 };
 
-// Data aspirasi dimulai dari kosong sesuai pengisian real yang akan datang
-export const INITIAL_ASPIRATIONS: Aspiration[] = [];
-
 export const INTI_OFFICERS = {
   ketua: {
     name: 'Aura Pinasti',
@@ -135,7 +145,7 @@ export const MPK_MEMBERS = [
     name: 'Aditya Wirawan',
     role: 'Ketua Komisi 1 (KONSTRAKUM)',
     division: 'KOMISI 1',
-    class: 'XI MIPA 3',
+    class: 'XI A',
     badge: 'KONSTRAKUM',
     badgeBg: '#dbe1ff',
     quote: 'Menyusun, melaksanakan, dan mengevaluasi program serta kebijakan di MPK secara strategis.',
@@ -145,7 +155,7 @@ export const MPK_MEMBERS = [
     name: 'Clara Anindya',
     role: 'Ketua Komisi 2 (KONSTADIP)',
     division: 'KOMISI 2',
-    class: 'XI IPS 1',
+    class: 'XI C',
     badge: 'KONSTADIP',
     badgeBg: '#21D99A',
     quote: 'Menjaga tata tertib dan stabilitas agar lingkungan belajar selalu nyaman dan kondusif.',
@@ -155,7 +165,7 @@ export const MPK_MEMBERS = [
     name: 'Bintang Ramadhan',
     role: 'Ketua Komisi 3 (KOASITER)',
     division: 'KOMISI 3',
-    class: 'XI MIPA 2',
+    class: 'XI D',
     badge: 'KOASITER',
     badgeBg: '#fde029',
     quote: 'Menampung, menyalurkan, serta mengawal setiap suara siswa agar tersampaikan dengan baik.',
@@ -165,7 +175,7 @@ export const MPK_MEMBERS = [
     name: 'Syifa Azzahra',
     role: 'Ketua Komisi 4 (KOMWASEV)',
     division: 'KOMISI 4',
-    class: 'XI IPS 3',
+    class: 'XI E',
     badge: 'KOMWASEV',
     badgeBg: '#FF7A30',
     quote: 'Mengawasi pelaksanaan kegiatan OSIS, MPK, dan ekskul agar berjalan efektif dan sesuai tujuan.',
@@ -175,7 +185,7 @@ export const MPK_MEMBERS = [
     name: 'Dimas Prasetya',
     role: 'Ketua Komisi 5 (KOMSIPUSOS)',
     division: 'KOMISI 5',
-    class: 'X-2',
+    class: 'X B',
     badge: 'KOMSIPUSOS',
     badgeBg: '#ffd9e1',
     quote: 'Mendokumentasikan dan menyebarkan informasi kegiatan MPK dan SMANSA secara terbuka.',
@@ -185,19 +195,240 @@ export const MPK_MEMBERS = [
 
 export const FAQS = [
   {
-    q: 'Apakah aspirasi yang saya kirim benar-benar dibaca pihak sekolah?',
-    a: 'Ya, setiap aspirasi yang masuk ke FORA otomatis diverifikasi Komisi 3 (KOASITER) MPK dan dibawa ke agenda rapat bersama pihak pimpinan dan komite sekolah. Anda dapat memantau nomor tiket secara real-time.',
+    q: 'Apakah isi aspirasi dan identitas saya benar-benar rahasia?',
+    a: 'Ya, seluruh kiriman bersifat privat. Pengiriman tidak meminta nama, email, atau kontak pribadi. Isi kiriman hanya dapat dibaca oleh admin MPK berwenang, dan pengirim dapat melacak status prosesnya secara privat menggunakan ID Tiket dan Kode Akses Rahasia.',
   },
   {
-    q: 'Apakah opsi kirim anonim aman?',
-    a: 'Sangat aman. Jika Anda memilih opsi "Kirim sebagai Anonim", identitas nama dan kelas tidak akan ditampilkan pada daftar publik ataupun pada nota dinas MPK. Kerahasiaan pelapor terjaga.',
+    q: 'Bagaimana cara melacak progres aspirasi yang sudah saya kirim?',
+    a: 'Setelah mengirim aspirasi, Anda akan menerima Nomor ID Tiket dan Kode Akses Rahasia. Buka menu "Lacak Status", masukkan kedua kode tersebut untuk melihat tahapan nyata perkembangan advokasi aspirasi Anda.',
   },
   {
     q: 'Berapa lama rata-rata aspirasi mendapatkan tanggapan resmi?',
-    a: 'Tanggapan dan verifikasi awal diberikan dalam waktu 1x24 jam hari kerja. Aspirasi yang memerlukan tindak lanjut teknis atau sarana prasarana akan diperbarui berkala statusnya.',
+    a: 'Verifikasi dan tanggapan awal diberikan dalam 1x24 jam hari kerja oleh Komisi 3 (KOASITER) MPK. Perkembangan rapat pleno atau tindak lanjut audiensi sekolah akan diperbarui berkala.',
   },
   {
-    q: 'Bagaimana cara mendukung aspirasi siswa lain?',
-    a: 'Cukup klik tombol "Dukungan" pada kartu aspirasi. Tingkat dukungan membantu MPK menentukan prioritas penyaluran aspirasi ke pihak sekolah.',
+    q: 'Mengapa ada opsi pilihan kelas?',
+    a: 'Pilihan kelas bersifat opsional ("Tidak ingin menyebutkan kelas" tersedia). Jika dipilih, informasi kelas hanya digunakan secara internal oleh admin MPK untuk pemetaan fasilitas dan rekapitulasi kebutuhan angkatan/kelas, tanpa menampilkan nama Anda.',
+  },
+];
+
+// 3 Data Aspirasi Sebelumnya (Disimpan dan Dijamin Tidak Hilang)
+export const PREVIOUS_ASPIRATIONS: Aspiration[] = [
+  {
+    id: '2026-0001',
+    accessKey: 'FORA-7A2K-9X4M',
+    accessKeyHash: '7bdc0bba8eb786c0a70b72b8cf23381478902245fe3d4a8425d52077197f5333',
+    title: 'Perbaikan dan Peremajaan AC Ruang Kelas XI & Laboratorium Komputer',
+    description: 'AC di beberapa ruang kelas lantai 2 dan lab komputer sering mati atau mengeluarkan udara hangat saat siang hari. Mohon perbaikan filter atau penambahan freon agar suasana belajar tetap kondusif.',
+    category: 'fasilitas',
+    grade: 'XI',
+    className: 'XI G',
+    status: 'follow_up',
+    createdAt: '05 Okt 2026, 09:15',
+    updatedAt: '08 Okt 2026, 14:30',
+    attachments: [
+      { name: 'foto_ac_lab_komputer.jpg', size: '1.8 MB', type: 'image/jpeg' },
+    ],
+    senderProcessNote: 'Nota dinas permohonan servis teknisi telah disampaikan ke Wakasek Sarana & Prasarana. Teknisi servis dijadwalkan hadir minggu ini.',
+    adminInternalNotes: 'Koordinasi dengan Pak Sugeng (Sarpras). Suku cadang filter dan isi freon sudah diajukan dalam anggaran pemeliharaan bulanan.',
+    mpkResponse: {
+      responderName: 'Aura Pinasti',
+      responderRole: 'Ketua MPK',
+      date: '08 Okt 2026',
+      statement: 'Sudah diagendakan dalam rapat koordinasi sarpras bersama Wakasek Sarana & Prasarana. Teknisi dijadwalkan datang minggu ini untuk pengecekan freon dan filter AC.',
+      actionTaken: 'Audiensi dengan Wakasek Sarpras & Tim Teknisi Sekolah',
+      verifiedOfficial: true,
+    },
+    timeline: [
+      {
+        stage: 'submitted',
+        label: 'Aspirasi Diterima Sistem FORA',
+        date: '05 Okt 2026, 09:15',
+        note: 'Aspirasi tercatat aman dengan nomor referensi 2026-0001.',
+        actor: 'Sistem FORA MPK',
+        completed: true,
+        current: false,
+      },
+      {
+        stage: 'received',
+        label: 'Verifikasi Komisi 3 (KOASITER)',
+        date: '05 Okt 2026, 13:40',
+        note: 'Terverifikasi valid dan diteruskan ke Komisi 2 (Sarpras & Lingkungan).',
+        actor: 'Komisi 3 MPK',
+        completed: true,
+        current: false,
+      },
+      {
+        stage: 'discussed',
+        label: 'Rapat Dengar Pendapat MPK',
+        date: '06 Okt 2026, 15:30',
+        note: 'Pembahasan usulan sarana pendingin ruangan dalam sidang komisi.',
+        actor: 'Pleno MPK',
+        completed: true,
+        current: false,
+      },
+      {
+        stage: 'follow_up',
+        label: 'Nota Dinas & Audiensi Pihak Sekolah',
+        date: '08 Okt 2026, 14:30',
+        note: 'Nota dinas permohonan servis teknisi telah diserahkan ke Wakasek Sarana Prasarana.',
+        actor: 'MPK & Wakasek Sarpras',
+        completed: true,
+        current: true,
+      },
+      {
+        stage: 'completed',
+        label: 'Eksekusi Kebijakan & Selesai',
+        date: 'Menunggu Realisasi Lapangan',
+        note: 'Pengecekan teknisi dan pemeliharaan AC tuntas.',
+        actor: 'Tim Teknisi Sarpras',
+        completed: false,
+        current: false,
+      },
+    ],
+  },
+  {
+    id: '2026-0002',
+    accessKey: 'FORA-3P8L-5W2N',
+    accessKeyHash: 'b6be4fa7b33b67da274a93b3693749ef9af5d1a8aec17554596f2eee1d3d7f1f',
+    title: 'Penyediaan Air Minum Isi Ulang Higienis dan Pengurangan Sampah Plastik Kantin',
+    description: 'Kami mengusulkan adanya dispenser galon isi ulang air mineral di koridor kelas dan kantin untuk mengurangi konsumsi botol plastik sekali pakai serta menghemat pengeluaran siswa.',
+    category: 'kantin',
+    grade: 'X',
+    className: 'X B',
+    status: 'discussed',
+    createdAt: '06 Okt 2026, 11:20',
+    updatedAt: '08 Okt 2026, 11:00',
+    attachments: [],
+    senderProcessNote: 'Usulan dispenser isi ulang sedang dalam tahap pengkajian kelayakan dan model sanitasi dengan paguyuban kantin dan UKS.',
+    adminInternalNotes: 'UKS dan Adiwiyata menyambut positif. Tinggal penentuan titik colokan listrik dan suplai galon mingguan.',
+    mpkResponse: {
+      responderName: 'Bintang Ramadhan',
+      responderRole: 'Ketua Komisi 3 (KOASITER)',
+      date: '08 Okt 2026',
+      statement: 'Dibahas dalam rapat pleno komisi 2 dan 3 bersama perwakilan paguyuban kantin sekolah untuk skema galon isi ulang ramah lingkungan.',
+      actionTaken: 'Kajian bersama Tim Adiwiyata Sekolah & Paguyuban Pengelola Kantin',
+      verifiedOfficial: true,
+    },
+    timeline: [
+      {
+        stage: 'submitted',
+        label: 'Aspirasi Diterima Sistem FORA',
+        date: '06 Okt 2026, 11:20',
+        note: 'Aspirasi tercatat aman dalam sistem FORA.',
+        actor: 'Sistem FORA MPK',
+        completed: true,
+        current: false,
+      },
+      {
+        stage: 'received',
+        label: 'Verifikasi Komisi MPK Terkait',
+        date: '06 Okt 2026, 16:00',
+        note: 'Verifikasi substansi program sekolah sehat dan hijau selesai.',
+        actor: 'Komisi 3 MPK',
+        completed: true,
+        current: false,
+      },
+      {
+        stage: 'discussed',
+        label: 'Rapat Dengar Pendapat MPK',
+        date: '08 Okt 2026, 11:00',
+        note: 'Pembahasan skema titik dispenser air dengan perwakilan kantin & tim Adiwiyata.',
+        actor: 'Pleno MPK',
+        completed: true,
+        current: true,
+      },
+      {
+        stage: 'follow_up',
+        label: 'Nota Dinas & Audiensi Pihak Sekolah',
+        date: 'Tahap Tindak Lanjut',
+        note: 'Penyampaian proposal titik dispenser kepada pimpinan sekolah.',
+        actor: 'MPK & Pimpinan Sekolah',
+        completed: false,
+        current: false,
+      },
+      {
+        stage: 'completed',
+        label: 'Eksekusi Kebijakan & Selesai',
+        date: 'Tahap Akhir',
+        note: 'Pemasangan dispenser operasional di koridor dan kantin.',
+        actor: 'Pihak Sekolah',
+        completed: false,
+        current: false,
+      },
+    ],
+  },
+  {
+    id: '2026-0003',
+    accessKey: 'FORA-9K4M-2V7Q',
+    accessKeyHash: 'f9f955ed1980c990138134c6923a62ce227ee5adbb8a41af3861e29294ca1832',
+    title: 'Optimalisasi Jadwal Pemakaian Lapangan Basket dan Futsal untuk Ekskul Sore',
+    description: 'Sering terjadi bentrok pemakaian lapangan antara ekskul basket, futsal, dan voli saat hari Selasa dan Kamis sore. Perlu pembagian jadwal resmi yang ditempel di mading dan disepakati bersama.',
+    category: 'event',
+    grade: 'XII',
+    className: 'XII C',
+    status: 'completed',
+    createdAt: '03 Okt 2026, 14:00',
+    updatedAt: '07 Okt 2026, 16:45',
+    attachments: [
+      { name: 'jadwal_sebelumnya.pdf', size: '420 KB', type: 'application/pdf' },
+    ],
+    senderProcessNote: 'Jadwal pemakaian lapangan telah disepakati oleh seluruh ketua ekskul dan pembina OSIS. Jadwal resmi terbaru telah dipasang di papan informasi sarana olahraga.',
+    adminInternalNotes: 'Kesepakatan sudah ditandatangani oleh Ketua OSIS, Ketua MPK, dan Pembina Kesiswaan.',
+    mpkResponse: {
+      responderName: 'Nadya Tifani',
+      responderRole: 'Wakil Ketua MPK',
+      date: '07 Okt 2026',
+      statement: 'Jadwal pemakaian lapangan telah disusun ulang secara adil bersama pembina OSIS/Ekskul dan mulai berlaku efektif per minggu ini.',
+      actionTaken: 'Penerbitan Surat Edaran Jadwal Penggunaan Fasilitas Olahraga Sekolah',
+      verifiedOfficial: true,
+    },
+    timeline: [
+      {
+        stage: 'submitted',
+        label: 'Aspirasi Diterima Sistem FORA',
+        date: '03 Okt 2026, 14:00',
+        note: 'Aspirasi tercatat di sistem.',
+        actor: 'Sistem FORA MPK',
+        completed: true,
+        current: false,
+      },
+      {
+        stage: 'received',
+        label: 'Verifikasi Komisi 4 (Ekskul & Olahraga)',
+        date: '03 Okt 2026, 17:30',
+        note: 'Komisi 4 mengonfirmasi adanya bentrok jadwal latihan.',
+        actor: 'Komisi 4 MPK',
+        completed: true,
+        current: false,
+      },
+      {
+        stage: 'discussed',
+        label: 'Rapat Bersama Ketua Ekskul Terkait',
+        date: '05 Okt 2026, 15:45',
+        note: 'Musyawarah pembagian hari dan slot waktu latihan per cabang ekskul.',
+        actor: 'Pleno MPK & OSIS',
+        completed: true,
+        current: false,
+      },
+      {
+        stage: 'follow_up',
+        label: 'Pengesahan Jadwal Bersama Pembina Kesiswaan',
+        date: '06 Okt 2026, 14:15',
+        note: 'Jadwal baru disetujui dan disahkan oleh pihak kesiswaan.',
+        actor: 'MPK & Kesiswaan',
+        completed: true,
+        current: false,
+      },
+      {
+        stage: 'completed',
+        label: 'Jadwal Baru Diterapkan & Selesai',
+        date: '07 Okt 2026, 16:45',
+        note: 'Jadwal resmi tertempel di sarpras olahraga dan aktif digunakan tanpa bentrok.',
+        actor: 'MPK & Seluruh Ekskul',
+        completed: true,
+        current: true,
+      },
+    ],
   },
 ];

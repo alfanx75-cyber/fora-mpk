@@ -2,97 +2,93 @@
   "entities": {
     "Aspiration": {
       "title": "Aspiration",
-      "description": "Student aspiration ticket submitted to MPK",
+      "description": "Private student aspiration ticket submitted to MPK",
       "type": "object",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Ticket ID e.g. 2026-0001",
-          "maxLength": 64
+          "description": "Ticket ID e.g. 2026-0001"
+        },
+        "accessKeyHash": {
+          "type": "string",
+          "description": "Cryptographic SHA-256 hash of secret access key"
         },
         "title": {
           "type": "string",
-          "description": "Title of the aspiration",
-          "maxLength": 200
+          "description": "Title of aspiration"
         },
         "description": {
           "type": "string",
-          "description": "Full description of aspiration",
-          "maxLength": 3000
+          "description": "Detailed text of aspiration"
         },
         "category": {
           "type": "string",
-          "description": "Category ID",
-          "enum": ["fasilitas", "kantin", "akademik", "event", "transportasi", "kebersihan", "ide_baru", "lainnya"]
+          "description": "Category key"
         },
-        "authorName": {
+        "grade": {
           "type": "string",
-          "description": "Name or Anonim",
-          "maxLength": 100
+          "description": "Grade level X, XI, XII or none"
         },
         "className": {
           "type": "string",
-          "description": "Class or Rahasia",
-          "maxLength": 50
-        },
-        "isAnonymous": {
-          "type": "boolean",
-          "description": "Whether submitted anonymously"
-        },
-        "supportCount": {
-          "type": "number",
-          "description": "Total upvotes received"
+          "description": "Class identifier or Rahasia"
         },
         "status": {
           "type": "string",
-          "description": "Current status in pipeline",
-          "enum": ["submitted", "received", "discussed", "follow_up", "completed"]
+          "description": "Current status submitted, received, discussed, follow_up, completed"
         },
         "createdAt": {
-          "type": "string",
-          "description": "Submission timestamp formatted string",
-          "maxLength": 100
+          "type": "string"
         },
         "updatedAt": {
-          "type": "string",
-          "description": "Last update timestamp formatted string",
-          "maxLength": 100
+          "type": "string"
         }
       },
-      "required": ["id", "title", "description", "category", "authorName", "className", "isAnonymous", "supportCount", "status", "createdAt", "updatedAt"]
+      "required": ["id", "accessKeyHash", "title", "description", "category", "status"]
     },
-    "AdminConfig": {
-      "title": "AdminConfig",
-      "description": "Custom admin credentials and system configuration",
+    "AppStats": {
+      "title": "AppStats",
+      "description": "Public aggregated statistics for real-time dashboard",
+      "type": "object",
+      "properties": {
+        "total": {
+          "type": "number",
+          "description": "Total active incoming aspirations"
+        },
+        "responded": {
+          "type": "number",
+          "description": "Aspirations with verified official response"
+        },
+        "inProgress": {
+          "type": "number",
+          "description": "Aspirations discussed or in follow-up"
+        },
+        "completed": {
+          "type": "number",
+          "description": "Aspirations marked completed"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "required": ["total", "responded", "inProgress", "completed"]
+    },
+    "AdminCredential": {
+      "title": "AdminCredential",
+      "description": "Custom admin credentials for MPK officers",
       "type": "object",
       "properties": {
         "adminUsername": {
-          "type": "string",
-          "description": "Admin login username",
-          "maxLength": 50
+          "type": "string"
         },
         "passwordHash": {
-          "type": "string",
-          "description": "Admin login password verification hash or secure token",
-          "maxLength": 256
+          "type": "string"
         },
         "updatedAt": {
-          "type": "string",
-          "description": "Timestamp of credential change",
-          "maxLength": 100
+          "type": "string"
         }
       },
-      "required": ["adminUsername", "passwordHash", "updatedAt"]
-    }
-  },
-  "firestore": {
-    "/aspirations/{aspirationId}": {
-      "schema": "#/entities/Aspiration",
-      "description": "Collection of all student aspirations"
-    },
-    "/admin_settings/{settingId}": {
-      "schema": "#/entities/AdminConfig",
-      "description": "System admin credentials and configuration"
+      "required": ["adminUsername", "passwordHash"]
     }
   }
 }

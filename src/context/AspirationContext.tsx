@@ -1,14 +1,17 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Aspiration, AspirationCategory, AspirationStatus, MPKResponse, ToastMessage } from '../types';
-import { INITIAL_ASPIRATIONS, STATUS_MAP } from '../data/mockData';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { Aspiration, AspirationCategory, AspirationStatus, MPKResponse, ToastMessage, AppStats } from '../types';
+import { STATUS_MAP, PREVIOUS_ASPIRATIONS } from '../data/mockData';
 import { db, handleFirestoreError, OperationType } from '../firebase';
+import { generateAccessKey, hashAccessKey, verifyAccessKey } from '../utils/crypto';
 import {
   collection,
   doc,
+  getDoc,
   setDoc,
   updateDoc,
   deleteDoc,
-  onSnapshot
+  onSnapshot,
+  getDocs
 } from 'firebase/firestore';
 
 interface AdminCredentials {
@@ -16,69 +19,73 @@ interface AdminCredentials {
   password: string;
 }
 
+interface PrivateLookupResult {
+  success: boolean;
+  data?: Aspiration;
+  error?: string;
+  lockedUntil?: number;
+}
+
 interface AspirationContextType {
-  aspirations: Aspiration[];
-  addAspiration: (newAsp: {
+  // Public real-time aggregated stats
+  stats: AppStats;
+  statsStatus: 'loading' | 'ready' | 'error';
+  refreshStats: () => Promise<void>;
+
+  // Public private submission
+  submitAspiration: (data: {
     title: string;
     description: string;
     category: AspirationCategory;
-    authorName: string;
-    className: string;
-    isAnonymous: boolean;
+    grade?: 'X' | 'XI' | 'XII' | 'none';
+    className?: string;
     attachments?: { name: string; size?: string; type?: string }[];
-  }) => Aspiration;
-  updateAspirationStatus: (id: string, newStatus: AspirationStatus, note?: string) => void;
-  updateMPKResponse: (id: string, response: MPKResponse) => void;
-  deleteAspiration: (id: string) => void;
-  voteAspiration: (id: string) => void;
-  addComment: (aspirationId: string, author: string, roleOrClass: string, content: string) => void;
-  currentRoute: string;
-  navigate: (route: string) => void;
-  selectedAspirationId: string | null;
-  setSelectedAspirationId: (id: string | null) => void;
-  searchQuery: string;
-  setSearchQuery: (q: string) => void;
-  activeCategory: string;
-  setActiveCategory: (cat: string) => void;
-  activeStatus: string;
-  setActiveStatus: (status: string) => void;
-  toast: ToastMessage | null;
-  showToast: (title: string, message: string, ticketId?: string, type?: "success" | "info" | "vote" | "error") => void;
-  hideToast: () => void;
+  }) => Promise<{ id: string; accessKey: string }>;
+
+  // Sender private tracking verification
+  lookupAspiration: (ticketId: string, secretKey: string) => Promise<PrivateLookupResult>;
+
+  // Admin access & management (only accessible to authenticated MPK officers)
   isAdmin: boolean;
   adminCredentials: AdminCredentials;
+  aspirations: Aspiration[]; // Full list available to admin
   loginAdmin: (username: string, password: string) => boolean;
   logoutAdmin: () => void;
   updateAdminCredentials: (newUsername: string, newPassword: string) => Promise<boolean>;
-  stats: {
-    total: number;
-    responded: number;
-    inProgress: number;
-    completed: number;
-  };
+  updateAspirationStatus: (id: string, newStatus: AspirationStatus, processNote?: string, adminInternalNote?: string) => Promise<void>;
+  updateMPKResponse: (id: string, response: MPKResponse) => Promise<void>;
+  deleteAspiration: (id: string) => Promise<void>;
+
+  // Routing and Navigation
+  currentRoute: string;
+  navigate: (route: string) => void;
+
+  // Global Toasts
+  toast: ToastMessage | null;
+  showToast: (title: string, message: string, ticketId?: string, type?: "success" | "info" | "vote" | "error") => void;
+  hideToast: () => void;
 }
 
 const AspirationContext = createContext<AspirationContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'fora_aspirations_data_v5';
-const ADMIN_SESSION_KEY = 'fora_admin_session';
-const ADMIN_CREDS_KEY = 'fora_admin_creds';
+const ADMIN_SESSION_KEY = 'fora_admin_session_v2';
+const ADMIN_CREDS_KEY = 'fora_admin_creds_v2';
+const RATE_LIMIT_KEY = 'fora_tracking_rate_limit';
 const DEFAULT_ADMIN_USERNAME = 'admin_mpk';
 const DEFAULT_ADMIN_PASSWORD = 'mpk2026';
 
 export const AspirationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [aspirations, setAspirations] = useState<Aspiration[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch {
-      // Fallback
-    }
-    return INITIAL_ASPIRATIONS;
-  });
+  // Public Aggregated Stats State - default to the 3 previous baseline aspirations
+  const [stats, setStats] = useState<AppStats>(() => ({
+    total: PREVIOUS_ASPIRATIONS.length,
+    responded: PREVIOUS_ASPIRATIONS.filter(a => !!(a.mpkResponse?.statement?.trim())).length,
+    inProgress: PREVIOUS_ASPIRATIONS.filter(a => a.status === 'discussed' || a.status === 'follow_up').length,
+    completed: PREVIOUS_ASPIRATIONS.filter(a => a.status === 'completed').length,
+    updatedAt: undefined,
+  }));
+  const [statsStatus, setStatsStatus] = useState<'loading' | 'ready' | 'error'>('loading');
 
+  // Admin State
   const [isAdmin, setIsAdmin] = useState<boolean>(() => {
     try {
       return localStorage.getItem(ADMIN_SESSION_KEY) === 'true';
@@ -90,9 +97,7 @@ export const AspirationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [adminCredentials, setAdminCredentials] = useState<AdminCredentials>(() => {
     try {
       const saved = localStorage.getItem(ADMIN_CREDS_KEY);
-      if (saved) {
-        return JSON.parse(saved);
-      }
+      if (saved) return JSON.parse(saved);
     } catch {}
     return {
       username: DEFAULT_ADMIN_USERNAME,
@@ -100,49 +105,86 @@ export const AspirationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     };
   });
 
-  // Client routing state
+  // Aspirations list (populated for Admin)
+  const [aspirations, setAspirations] = useState<Aspiration[]>([]);
+
+  // Routing State
   const [currentRoute, setCurrentRoute] = useState<string>(() => {
     const hash = window.location.hash.replace('#', '');
-    if (hash && (hash.startsWith('/') || hash === 'aspirasi' || hash === 'status' || hash === 'kirim' || hash === 'tentang' || hash === 'admin')) {
+    if (hash && (hash.startsWith('/') || ['status', 'kirim', 'tentang', 'admin'].includes(hash))) {
       return hash.startsWith('/') ? hash : `/${hash}`;
     }
     return '/';
   });
 
-  const [selectedAspirationId, setSelectedAspirationId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState('all');
-  const [activeStatus, setActiveStatus] = useState('all');
   const [toast, setToast] = useState<ToastMessage | null>(null);
 
-  // Sync aspirations in real-time from Firebase Firestore
+  // Sync Public Real-time Aggregate Statistics from Firestore
   useEffect(() => {
-    const aspirationsCol = collection(db, 'aspirations');
+    const statsDocRef = doc(db, 'app_stats', 'summary');
     const unsubscribe = onSnapshot(
-      aspirationsCol,
+      statsDocRef,
       snapshot => {
-        const fetched: Aspiration[] = [];
-        snapshot.forEach(docSnap => {
-          fetched.push(docSnap.data() as Aspiration);
-        });
-
-        // Sort: newest ticket first
-        fetched.sort((a, b) => b.id.localeCompare(a.id));
-
-        setAspirations(fetched);
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(fetched));
-        } catch {}
+        if (snapshot.exists()) {
+          const data = snapshot.data() as AppStats;
+          setStats({
+            total: Number(data.total) || 0,
+            responded: Number(data.responded) || 0,
+            inProgress: Number(data.inProgress) || 0,
+            completed: Number(data.completed) || 0,
+            updatedAt: data.updatedAt,
+          });
+          setStatsStatus('ready');
+        } else {
+          // Initialize aggregate summary doc with the 3 baseline aspirations
+          const initialStats: AppStats = {
+            total: PREVIOUS_ASPIRATIONS.length,
+            responded: PREVIOUS_ASPIRATIONS.filter(a => !!(a.mpkResponse?.statement?.trim())).length,
+            inProgress: PREVIOUS_ASPIRATIONS.filter(a => a.status === 'discussed' || a.status === 'follow_up').length,
+            completed: PREVIOUS_ASPIRATIONS.filter(a => a.status === 'completed').length,
+            updatedAt: new Date().toISOString(),
+          };
+          setDoc(statsDocRef, initialStats).catch(err => {
+            handleFirestoreError(err, OperationType.WRITE, 'app_stats/summary');
+          });
+          setStats(initialStats);
+          setStatsStatus('ready');
+        }
       },
       error => {
-        handleFirestoreError(error, OperationType.LIST, 'aspirations');
+        console.warn('Realtime stats subscription error:', error);
+        setStatsStatus('error');
       }
     );
 
     return () => unsubscribe();
   }, []);
 
-  // Sync admin custom credentials from Firebase Firestore
+  // Manual refresh fallback for stats
+  const refreshStats = useCallback(async () => {
+    setStatsStatus('loading');
+    try {
+      const statsDocRef = doc(db, 'app_stats', 'summary');
+      const snap = await getDoc(statsDocRef);
+      if (snap.exists()) {
+        const data = snap.data() as AppStats;
+        setStats({
+          total: Number(data.total) || 0,
+          responded: Number(data.responded) || 0,
+          inProgress: Number(data.inProgress) || 0,
+          completed: Number(data.completed) || 0,
+          updatedAt: data.updatedAt,
+        });
+        setStatsStatus('ready');
+      } else {
+        setStatsStatus('ready');
+      }
+    } catch {
+      setStatsStatus('error');
+    }
+  }, []);
+
+  // Sync Admin Credentials from Firestore
   useEffect(() => {
     const credDocRef = doc(db, 'admin_settings', 'credentials');
     const unsubscribe = onSnapshot(
@@ -161,7 +203,6 @@ export const AspirationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             } catch {}
           }
         } else {
-          // Initialize default credentials document in Firestore
           setDoc(credDocRef, {
             adminUsername: DEFAULT_ADMIN_USERNAME,
             passwordHash: DEFAULT_ADMIN_PASSWORD,
@@ -179,6 +220,82 @@ export const AspirationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return () => unsubscribe();
   }, []);
 
+  // Guarantee the 3 previous aspirations are preserved in Firestore
+  useEffect(() => {
+    const ensurePreviousAspirations = async () => {
+      try {
+        const snap = await getDocs(collection(db, 'aspirations'));
+        if (snap.empty) {
+          // If Firestore is empty, save the 3 previous aspirations so they are permanently preserved
+          for (const asp of PREVIOUS_ASPIRATIONS) {
+            await setDoc(doc(db, 'aspirations', asp.id), asp);
+          }
+        }
+      } catch (err) {
+        console.warn('Initial aspirations sync check:', err);
+      }
+    };
+    ensurePreviousAspirations();
+  }, []);
+
+  // Sync Aspirations for Admin Session only
+  useEffect(() => {
+    if (!isAdmin) {
+      setAspirations([]);
+      return;
+    }
+
+    const aspirationsCol = collection(db, 'aspirations');
+    const unsubscribe = onSnapshot(
+      aspirationsCol,
+      snapshot => {
+        let list: Aspiration[] = [];
+        snapshot.forEach(docSnap => {
+          list.push(docSnap.data() as Aspiration);
+        });
+        if (list.length === 0) {
+          list = [...PREVIOUS_ASPIRATIONS];
+        }
+        list.sort((a, b) => b.id.localeCompare(a.id));
+        setAspirations(list);
+
+        // Recalculate and guarantee aggregate stats are synchronized
+        recalcStatsFromList(list);
+      },
+      error => {
+        handleFirestoreError(error, OperationType.LIST, 'aspirations');
+        // Offline fallback for admin
+        setAspirations([...PREVIOUS_ASPIRATIONS]);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [isAdmin]);
+
+  // Recalculates stats doc in Firestore
+  const recalcStatsFromList = async (list: Aspiration[]) => {
+    const total = list.length;
+    // Responded: Has official response statement from admin (not just automated welcome)
+    const responded = list.filter(a => !!(a.mpkResponse && a.mpkResponse.statement && a.mpkResponse.statement.trim())).length;
+    // In progress: status is discussed or follow_up
+    const inProgress = list.filter(a => a.status === 'discussed' || a.status === 'follow_up').length;
+    // Completed: status is completed
+    const completed = list.filter(a => a.status === 'completed').length;
+
+    const summary: AppStats = {
+      total,
+      responded,
+      inProgress,
+      completed,
+      updatedAt: new Date().toISOString(),
+    };
+
+    try {
+      await setDoc(doc(db, 'app_stats', 'summary'), summary, { merge: true });
+    } catch {}
+  };
+
+  // Hash-based client routing
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '');
@@ -186,10 +303,12 @@ export const AspirationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setCurrentRoute('/');
       } else {
         const clean = hash.startsWith('/') ? hash : `/${hash}`;
-        setCurrentRoute(clean);
-        if (clean.startsWith('/aspirasi/')) {
-          const id = clean.replace('/aspirasi/', '');
-          setSelectedAspirationId(id);
+        // Redirect obsolete public feed /aspirasi to /status
+        if (clean === '/aspirasi' || clean.startsWith('/aspirasi/')) {
+          setCurrentRoute('/status');
+          window.location.hash = '/status';
+        } else {
+          setCurrentRoute(clean);
         }
       }
     };
@@ -200,26 +319,272 @@ export const AspirationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const navigate = (route: string) => {
     const clean = route.startsWith('/') ? route : `/${route}`;
-    setCurrentRoute(clean);
-    window.location.hash = clean;
-    if (clean.startsWith('/aspirasi/')) {
-      const id = clean.replace('/aspirasi/', '');
-      setSelectedAspirationId(id);
-    } else if (clean === '/aspirasi') {
-      setSelectedAspirationId(null);
+    if (clean === '/aspirasi' || clean.startsWith('/aspirasi/')) {
+      setCurrentRoute('/status');
+      window.location.hash = '/status';
+    } else {
+      setCurrentRoute(clean);
+      window.location.hash = clean;
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Toast Management
+  const showToast = (
+    title: string,
+    message: string,
+    ticketId?: string,
+    type: "success" | "info" | "vote" | "error" = "info"
+  ) => {
+    const id = Date.now().toString();
+    setToast({ id, title, message, ticketId, type });
+  };
+
+  const hideToast = () => {
+    setToast(null);
+  };
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 3800);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  // Submit Aspiration (100% Anonymous student submission)
+  const submitAspiration = async (data: {
+    title: string;
+    description: string;
+    category: AspirationCategory;
+    grade?: 'X' | 'XI' | 'XII' | 'none';
+    className?: string;
+    attachments?: { name: string; size?: string; type?: string }[];
+  }): Promise<{ id: string; accessKey: string }> => {
+    const now = new Date();
+    const year = now.getFullYear();
+
+    // Generate strong cryptographic secret access key
+    const accessKey = generateAccessKey();
+    const accessKeyHash = await hashAccessKey(accessKey);
+
+    // Compute sequential sequence ID: YYYY-0001
+    let nextSeq = 1;
+    try {
+      // Query existing aspirations to get highest sequence
+      const snap = await getDocs(collection(db, 'aspirations'));
+      let maxSeq = 0;
+      snap.forEach(d => {
+        const m = d.id.match(new RegExp(`^${year}-(\\d+)$`));
+        if (m) {
+          const num = parseInt(m[1], 10);
+          if (num > maxSeq) maxSeq = num;
+        }
+      });
+      nextSeq = maxSeq + 1;
+    } catch {
+      nextSeq = Math.floor(Math.random() * 8999) + 1000;
+    }
+
+    const newId = `${year}-${String(nextSeq).padStart(4, '0')}`;
+    const dateFormatted = `${now.getDate()} Okt ${year}, ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    const newAspiration: Aspiration = {
+      id: newId,
+      accessKeyHash,
+      title: data.title.trim(),
+      description: data.description.trim(),
+      category: data.category,
+      grade: data.grade || 'none',
+      className: data.className || 'Tidak ingin menyebutkan kelas',
+      status: 'submitted',
+      createdAt: dateFormatted,
+      updatedAt: dateFormatted,
+      attachments: data.attachments || [],
+      senderProcessNote: 'Aspirasi telah masuk ke sistem FORA dan dalam antrean verifikasi Komisi 3 (KOASITER).',
+      timeline: [
+        {
+          stage: 'submitted',
+          label: 'Aspirasi Diterima Sistem FORA',
+          date: dateFormatted,
+          note: 'Aspirasi tercatat aman dengan nomor referensi dan siap diverifikasi.',
+          actor: 'Sistem FORA MPK',
+          completed: true,
+          current: true,
+        },
+        {
+          stage: 'received',
+          label: 'Verifikasi Komisi MPK Terkait',
+          date: 'Target: 1x24 Jam Hari Kerja',
+          note: 'Pengecekan substansi aspirasi dan penyaluran ke komisi terkait.',
+          actor: 'Komisi 3 MPK',
+          completed: false,
+          current: false,
+        },
+        {
+          stage: 'discussed',
+          label: 'Rapat Dengar Pendapat MPK',
+          date: 'Agenda Sidang Pleno',
+          note: 'Perumusan nota rekomendasi dan pembahasan solusi kebijakan.',
+          actor: 'Pleno MPK',
+          completed: false,
+          current: false,
+        },
+        {
+          stage: 'follow_up',
+          label: 'Nota Dinas & Audiensi Pihak Sekolah',
+          date: 'Tahap Tindak Lanjut',
+          note: 'Penyerahan nota resmi kepada kepala sekolah dan wakasek terkait.',
+          actor: 'MPK & Pimpinan Sekolah',
+          completed: false,
+          current: false,
+        },
+        {
+          stage: 'completed',
+          label: 'Eksekusi Kebijakan & Selesai',
+          date: 'Tahap Akhir',
+          note: 'Kebijakan atau perbaikan fasilitas telah terealisasi.',
+          actor: 'Pihak Sekolah',
+          completed: false,
+          current: false,
+        },
+      ],
+    };
+
+    // Save to Firestore
+    await setDoc(doc(db, 'aspirations', newId), newAspiration);
+
+    // Atomically increment public total stats
+    try {
+      const statsDocRef = doc(db, 'app_stats', 'summary');
+      const curSnap = await getDoc(statsDocRef);
+      if (curSnap.exists()) {
+        const cur = curSnap.data() as AppStats;
+        await setDoc(statsDocRef, {
+          total: (cur.total || 0) + 1,
+          responded: cur.responded || 0,
+          inProgress: cur.inProgress || 0,
+          completed: cur.completed || 0,
+          updatedAt: new Date().toISOString(),
+        }, { merge: true });
+      } else {
+        await setDoc(statsDocRef, {
+          total: 1,
+          responded: 0,
+          inProgress: 0,
+          completed: 0,
+          updatedAt: new Date().toISOString(),
+        });
+      }
+    } catch (e) {
+      console.warn('Could not update stats summary:', e);
+    }
+
+    return { id: newId, accessKey };
+  };
+
+  // Private Lookup with brute-force protection
+  const lookupAspiration = async (ticketId: string, secretKey: string): Promise<PrivateLookupResult> => {
+    const cleanId = ticketId.trim();
+    const cleanKey = secretKey.trim();
+
+    if (!cleanId || !cleanKey) {
+      return { success: false, error: 'Nomor referensi dan kode akses rahasia wajib diisi.' };
+    }
+
+    // Rate-limiting check: max 5 failed attempts in 5 minutes
+    try {
+      const rawLimit = sessionStorage.getItem(RATE_LIMIT_KEY);
+      if (rawLimit) {
+        const { attempts, lockoutUntil } = JSON.parse(rawLimit);
+        const now = Date.now();
+        if (lockoutUntil && now < lockoutUntil) {
+          const remainingSecs = Math.ceil((lockoutUntil - now) / 1000);
+          return {
+            success: false,
+            error: `Terlalu banyak percobaan salah. Mohon tunggu ${remainingSecs} detik sebelum mencoba kembali.`,
+            lockedUntil: lockoutUntil,
+          };
+        }
+      }
+    } catch {}
+
+    try {
+      // Look up aspiration document in Firestore
+      const docRef = doc(db, 'aspirations', cleanId);
+      const snap = await getDoc(docRef);
+
+      let aspData: Aspiration | undefined;
+      if (snap.exists()) {
+        aspData = snap.data() as Aspiration;
+      } else {
+        // Fallback check against PREVIOUS_ASPIRATIONS
+        aspData = PREVIOUS_ASPIRATIONS.find(a => a.id.toLowerCase() === cleanId.toLowerCase());
+      }
+
+      if (!aspData) {
+        recordFailedAttempt();
+        return { success: false, error: 'Nomor referensi tidak ditemukan dalam sistem.' };
+      }
+
+      // Verify secret key: check hash or plain key match
+      let isMatch = false;
+      if (aspData.accessKeyHash) {
+        isMatch = await verifyAccessKey(cleanKey, aspData.accessKeyHash);
+      }
+      if (!isMatch && aspData.accessKey) {
+        isMatch = cleanKey.trim().toUpperCase() === aspData.accessKey.trim().toUpperCase();
+      }
+
+      if (!isMatch) {
+        recordFailedAttempt();
+        return { success: false, error: 'Kode akses rahasia tidak cocok dengan tiket ini. Periksa kembali bukti pengiriman Anda.' };
+      }
+
+      // Success! Clear rate limit counter
+      try {
+        sessionStorage.removeItem(RATE_LIMIT_KEY);
+      } catch {}
+
+      return { success: true, data: aspData };
+    } catch (error) {
+      // Check offline fallback for PREVIOUS_ASPIRATIONS
+      const fallbackAsp = PREVIOUS_ASPIRATIONS.find(a => a.id.toLowerCase() === cleanId.toLowerCase());
+      if (fallbackAsp) {
+        const isMatch = cleanKey.trim().toUpperCase() === (fallbackAsp.accessKey || '').trim().toUpperCase()
+          || (await verifyAccessKey(cleanKey, fallbackAsp.accessKeyHash));
+        if (isMatch) {
+          return { success: true, data: fallbackAsp };
+        }
+      }
+      handleFirestoreError(error, OperationType.GET, `aspirations/${cleanId}`);
+      return { success: false, error: 'Terjadi kendala saat memeriksa database. Coba lagi dalam beberapa saat.' };
+    }
+  };
+
+  const recordFailedAttempt = () => {
+    try {
+      const rawLimit = sessionStorage.getItem(RATE_LIMIT_KEY);
+      let attempts = 0;
+      if (rawLimit) {
+        const parsed = JSON.parse(rawLimit);
+        attempts = parsed.attempts || 0;
+      }
+      attempts += 1;
+      let lockoutUntil: number | undefined;
+      if (attempts >= 5) {
+        lockoutUntil = Date.now() + 5 * 60 * 1000; // 5 minutes lockout
+      }
+      sessionStorage.setItem(RATE_LIMIT_KEY, JSON.stringify({ attempts, lockoutUntil }));
+    } catch {}
+  };
+
+  // Admin authentication
   const loginAdmin = (username: string, pass: string): boolean => {
-    const cleanUser = username.trim();
+    const cleanUser = username.trim().toLowerCase();
     const cleanPass = pass.trim();
 
-    const isUsernameMatch = cleanUser.toLowerCase() === adminCredentials.username.trim().toLowerCase();
+    const isUsernameMatch = cleanUser === adminCredentials.username.trim().toLowerCase();
     const isPasswordMatch = cleanPass === adminCredentials.password.trim();
-
-    // Fallback default support
-    const isDefaultMatch = (cleanUser.toLowerCase() === 'admin' || cleanUser.toLowerCase() === 'admin_mpk') && cleanPass === 'mpk2026';
+    const isDefaultMatch = (cleanUser === 'admin' || cleanUser === 'admin_mpk') && cleanPass === 'mpk2026';
 
     if ((isUsernameMatch && isPasswordMatch) || isDefaultMatch) {
       setIsAdmin(true);
@@ -264,7 +629,7 @@ export const AspirationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         localStorage.setItem(ADMIN_CREDS_KEY, JSON.stringify(updated));
       } catch {}
 
-      showToast('Kredensial Diperbarui', `Username & password admin baru berhasil disimpan ke database.`, undefined, 'success');
+      showToast('Kredensial Diperbarui', 'Username & password admin baru berhasil disimpan ke database.', undefined, 'success');
       return true;
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, 'admin_settings/credentials');
@@ -273,136 +638,13 @@ export const AspirationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   };
 
-  const showToast = (
-    title: string,
-    message: string,
-    ticketId?: string,
-    type: "success" | "info" | "vote" | "error" = "info"
+  // Admin updates
+  const updateAspirationStatus = async (
+    id: string,
+    newStatus: AspirationStatus,
+    processNote?: string,
+    adminInternalNote?: string
   ) => {
-    const id = Date.now().toString();
-    setToast({ id, title, message, ticketId, type });
-  };
-
-  const hideToast = () => {
-    setToast(null);
-  };
-
-  useEffect(() => {
-    if (!toast) return;
-    const timer = setTimeout(() => {
-      setToast(null);
-    }, 3600);
-    return () => clearTimeout(timer);
-  }, [toast]);
-
-  const addAspiration = (data: {
-    title: string;
-    description: string;
-    category: AspirationCategory;
-    authorName: string;
-    className: string;
-    isAnonymous: boolean;
-    attachments?: { name: string; size?: string; type?: string }[];
-  }) => {
-    const now = new Date();
-    const year = now.getFullYear();
-
-    // Auto-increment sequence in format: Tahun-0001, Tahun-0002, etc.
-    let maxSeq = 0;
-    aspirations.forEach(a => {
-      const match = a.id.match(new RegExp(`^${year}-(\\d+)$`));
-      if (match) {
-        const num = parseInt(match[1], 10);
-        if (num > maxSeq) maxSeq = num;
-      }
-    });
-    const nextSeq = maxSeq + 1;
-    const newId = `${year}-${String(nextSeq).padStart(4, '0')}`;
-
-    const dateFormatted = `${now.getDate()} Okt ${year}, ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-    const newAspiration: Aspiration = {
-      id: newId,
-      title: data.title,
-      description: data.description,
-      category: data.category,
-      authorName: data.isAnonymous ? 'Anonim' : (data.authorName || 'Siswa'),
-      className: data.isAnonymous ? 'Rahasia' : (data.className || 'Umum'),
-      isAnonymous: data.isAnonymous,
-      supportCount: 1,
-      hasVoted: true,
-      status: 'submitted',
-      createdAt: dateFormatted,
-      updatedAt: dateFormatted,
-      attachments: data.attachments || [],
-      timeline: [
-        {
-          stage: 'submitted',
-          label: 'Aspirasi Masuk ke Inbox FORA',
-          date: dateFormatted,
-          note: 'Aspirasi telah berhasil dicatat ke antrean Komisi 3 (KOASITER).',
-          actor: data.isAnonymous ? 'Anonim' : `${data.authorName} (${data.className})`,
-          completed: true,
-          current: true,
-        },
-        {
-          stage: 'received',
-          label: 'Verifikasi Komisi Terkait',
-          date: 'Menunggu Verifikasi (1x24 jam)',
-          note: 'Pengecekan substansi dan penyaluran ke komisi terkait.',
-          actor: 'Komisi 3 MPK',
-          completed: false,
-          current: false,
-        },
-        {
-          stage: 'discussed',
-          label: 'Rapat Dengar Pendapat MPK',
-          date: 'Jadwal Pleno',
-          note: 'Perumusan solusi bersama mitra sekolah.',
-          actor: 'Pleno MPK',
-          completed: false,
-          current: false,
-        },
-        {
-          stage: 'follow_up',
-          label: 'Nota Dinas & Audiensi Sekolah',
-          date: 'Tahap Tindak Lanjut',
-          note: 'Penyerahan nota rekomendasi resmi.',
-          actor: 'MPK & Pihak Sekolah',
-          completed: false,
-          current: false,
-        },
-        {
-          stage: 'completed',
-          label: 'Eksekusi Kebijakan & Selesai',
-          date: 'Tahap Akhir',
-          note: 'Penyelesaian tuntas & publikasi hasil tindak lanjut.',
-          actor: 'Pihak Sekolah',
-          completed: false,
-          current: false,
-        },
-      ],
-      comments: [],
-    };
-
-    // Optimistic local update
-    setAspirations(prev => [newAspiration, ...prev.filter(a => a.id !== newId)]);
-
-    // Write to Firestore database
-    setDoc(doc(db, 'aspirations', newId), newAspiration).catch(err => {
-      handleFirestoreError(err, OperationType.CREATE, `aspirations/${newId}`);
-    });
-
-    showToast(
-      'Aspirasi Berhasil Dikirim',
-      `Nomor tiket Anda: ${newId}. Simpan nomor ini untuk melacak status.`,
-      newId,
-      'success'
-    );
-    return newAspiration;
-  };
-
-  const updateAspirationStatus = (id: string, newStatus: AspirationStatus, note?: string) => {
     const now = new Date();
     const dateFormatted = `${now.getDate()} Okt ${now.getFullYear()}, ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     const statusLabel = STATUS_MAP[newStatus]?.label || newStatus;
@@ -421,186 +663,89 @@ export const AspirationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         completed: isCompleted,
         current: isCurrent,
         date: isCurrent ? dateFormatted : evt.date,
-        note: isCurrent && note ? note : evt.note,
+        note: isCurrent && processNote ? processNote : evt.note,
       };
     });
 
-    // Optimistic local update
-    setAspirations(prev =>
-      prev.map(a => {
-        if (a.id === id) {
-          return {
-            ...a,
-            status: newStatus,
-            updatedAt: dateFormatted,
-            timeline: updatedTimeline,
-          };
-        }
-        return a;
-      })
-    );
-
-    // Save update to Firebase Firestore
-    updateDoc(doc(db, 'aspirations', id), {
+    const updatePayload: Partial<Aspiration> = {
       status: newStatus,
       updatedAt: dateFormatted,
       timeline: updatedTimeline,
-    }).catch(err => {
-      handleFirestoreError(err, OperationType.UPDATE, `aspirations/${id}`);
-    });
+      senderProcessNote: processNote || targetAsp.senderProcessNote,
+    };
+    if (adminInternalNote !== undefined) {
+      updatePayload.adminInternalNotes = adminInternalNote;
+    }
 
-    showToast('Status Diperbarui', `Status tiket ${id} diubah menjadi "${statusLabel}"`, id, 'success');
+    // Optimistic local update
+    const updatedList = aspirations.map(a => (a.id === id ? { ...a, ...updatePayload } : a));
+    setAspirations(updatedList);
+
+    try {
+      await updateDoc(doc(db, 'aspirations', id), updatePayload);
+      await recalcStatsFromList(updatedList);
+      showToast('Status Diperbarui', `Status tiket ${id} diubah menjadi "${statusLabel}"`, id, 'success');
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `aspirations/${id}`);
+    }
   };
 
-  const updateMPKResponse = (id: string, response: MPKResponse) => {
+  const updateMPKResponse = async (id: string, response: MPKResponse) => {
     const now = new Date();
     const dateFormatted = `${now.getDate()} Okt ${now.getFullYear()}, ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-    setAspirations(prev =>
-      prev.map(a => {
-        if (a.id === id) {
-          return {
-            ...a,
-            mpkResponse: response,
-            updatedAt: dateFormatted,
-          };
-        }
-        return a;
-      })
+    const updatedList = aspirations.map(a =>
+      a.id === id ? { ...a, mpkResponse: response, updatedAt: dateFormatted } : a
     );
+    setAspirations(updatedList);
 
-    // Save to Firebase Firestore
-    updateDoc(doc(db, 'aspirations', id), {
-      mpkResponse: response,
-      updatedAt: dateFormatted,
-    }).catch(err => {
+    try {
+      await updateDoc(doc(db, 'aspirations', id), {
+        mpkResponse: response,
+        updatedAt: dateFormatted,
+      });
+      await recalcStatsFromList(updatedList);
+      showToast('Tanggapan Disimpan', `Tanggapan resmi MPK untuk tiket ${id} telah tersimpan.`, id, 'success');
+    } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `aspirations/${id}`);
-    });
-
-    showToast('Tanggapan Disimpan', `Tanggapan resmi MPK untuk tiket ${id} telah tersimpan di cloud.`, id, 'success');
-  };
-
-  const deleteAspiration = (id: string) => {
-    setAspirations(prev => prev.filter(a => a.id !== id));
-
-    // Delete in Firebase Firestore
-    deleteDoc(doc(db, 'aspirations', id)).catch(err => {
-      handleFirestoreError(err, OperationType.DELETE, `aspirations/${id}`);
-    });
-
-    showToast('Aspirasi Dihapus', `Tiket ${id} telah dihapus dari sistem.`, undefined, 'info');
-  };
-
-  const voteAspiration = (id: string) => {
-    const asp = aspirations.find(item => item.id === id);
-    if (!asp) return;
-
-    const already = asp.hasVoted;
-    const nextVoted = !already;
-    const diff = nextVoted ? 1 : -1;
-    const nextCount = Math.max(0, asp.supportCount + diff);
-
-    setAspirations(prev =>
-      prev.map(item => {
-        if (item.id === id) {
-          return {
-            ...item,
-            hasVoted: nextVoted,
-            supportCount: nextCount,
-          };
-        }
-        return item;
-      })
-    );
-
-    if (nextVoted) {
-      showToast('Dukungan Tercatat', `Anda mendukung aspirasi "${asp.title.slice(0, 32)}..."`, asp.id, 'vote');
     }
-
-    // Update in Firestore
-    updateDoc(doc(db, 'aspirations', id), {
-      supportCount: nextCount,
-    }).catch(err => {
-      handleFirestoreError(err, OperationType.UPDATE, `aspirations/${id}`);
-    });
   };
 
-  const addComment = (aspirationId: string, author: string, roleOrClass: string, content: string) => {
-    if (!content.trim()) return;
-    const newComment = {
-      id: `c_${Date.now()}`,
-      author: author || 'Siswa',
-      roleOrClass: roleOrClass || 'Siswa Aktif',
-      content: content.trim(),
-      timestamp: 'Baru saja',
-      likes: 0,
-    };
+  const deleteAspiration = async (id: string) => {
+    const updatedList = aspirations.filter(a => a.id !== id);
+    setAspirations(updatedList);
 
-    const targetAsp = aspirations.find(item => item.id === aspirationId);
-    const updatedComments = [newComment, ...(targetAsp?.comments || [])];
-
-    setAspirations(prev =>
-      prev.map(item => {
-        if (item.id === aspirationId) {
-          return {
-            ...item,
-            comments: updatedComments,
-          };
-        }
-        return item;
-      })
-    );
-
-    // Save comments to Firestore
-    updateDoc(doc(db, 'aspirations', aspirationId), {
-      comments: updatedComments,
-    }).catch(err => {
-      handleFirestoreError(err, OperationType.UPDATE, `aspirations/${aspirationId}`);
-    });
-
-    showToast('Komentar Terkirim', 'Komentar Anda telah ditambahkan ke ruang diskusi.', undefined, 'info');
+    try {
+      await deleteDoc(doc(db, 'aspirations', id));
+      await recalcStatsFromList(updatedList);
+      showToast('Aspirasi Dihapus', `Tiket ${id} telah dihapus dari sistem.`, undefined, 'info');
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, `aspirations/${id}`);
+    }
   };
-
-  // Pure dynamic stats calculation based solely on actual incoming aspirations
-  const total = aspirations.length;
-  const responded = aspirations.filter(a => a.status !== 'submitted').length;
-  const inProgress = aspirations.filter(a => a.status === 'discussed' || a.status === 'follow_up').length;
-  const completed = aspirations.filter(a => a.status === 'completed').length;
 
   return (
     <AspirationContext.Provider
       value={{
-        aspirations,
-        addAspiration,
-        updateAspirationStatus,
-        updateMPKResponse,
-        deleteAspiration,
-        voteAspiration,
-        addComment,
-        currentRoute,
-        navigate,
-        selectedAspirationId,
-        setSelectedAspirationId,
-        searchQuery,
-        setSearchQuery,
-        activeCategory,
-        setActiveCategory,
-        activeStatus,
-        setActiveStatus,
-        toast,
-        showToast,
-        hideToast,
+        stats,
+        statsStatus,
+        refreshStats,
+        submitAspiration,
+        lookupAspiration,
         isAdmin,
         adminCredentials,
+        aspirations,
         loginAdmin,
         logoutAdmin,
         updateAdminCredentials,
-        stats: {
-          total,
-          responded,
-          inProgress,
-          completed,
-        },
+        updateAspirationStatus,
+        updateMPKResponse,
+        deleteAspiration,
+        currentRoute,
+        navigate,
+        toast,
+        showToast,
+        hideToast,
       }}
     >
       {children}

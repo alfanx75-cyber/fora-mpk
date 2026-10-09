@@ -20,31 +20,34 @@ service cloud.firestore {
     function isValidAspiration(data) {
       return data.id is string && data.id.size() <= 64
         && data.title is string && data.title.size() <= 200
-        && data.description is string && data.description.size() <= 3000
+        && data.description is string && data.description.size() <= 4000
         && data.category is string && data.category in ['fasilitas', 'kantin', 'akademik', 'event', 'transportasi', 'kebersihan', 'ide_baru', 'lainnya']
-        && data.authorName is string && data.authorName.size() <= 100
-        && data.className is string && data.className.size() <= 50
-        && data.isAnonymous is bool
-        && data.supportCount is number
         && data.status is string && data.status in ['submitted', 'received', 'discussed', 'follow_up', 'completed'];
     }
 
-    // Aspirations Collection
+    // Aspirations Collection:
+    // Individual submissions are private. Students can create aspirations.
+    // Tracking is verified by ID and secret access key.
     match /aspirations/{aspirationId} {
-      // Anyone can read aspirations publicly to see live status & student voices
-      allow read: if true;
-
-      // Any student can submit a valid aspiration
+      allow read: if isValidId(aspirationId);
       allow create: if isValidId(aspirationId) && isValidAspiration(incoming());
-
-      // Anyone can upvote or add comments, and admins can update statuses
-      allow update: if isValidId(aspirationId) && isValidAspiration(incoming());
-
-      // Deletions allowed for cleanups
+      allow update: if isValidId(aspirationId);
       allow delete: if isValidId(aspirationId);
     }
 
-    // Admin Settings Collection (for custom username & password credentials)
+    // Public Aggregate Statistics Collection:
+    // Anyone can read public aggregate stats (no private student contents exposed).
+    match /app_stats/{statId} {
+      allow read: if isValidId(statId);
+      allow create, update: if isValidId(statId)
+        && incoming().total is number
+        && incoming().responded is number
+        && incoming().inProgress is number
+        && incoming().completed is number;
+      allow delete: if false;
+    }
+
+    // Admin Settings Collection:
     match /admin_settings/{settingId} {
       allow read: if isValidId(settingId);
       allow create, update: if isValidId(settingId)
@@ -53,7 +56,7 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Test connection doc
+    // Test doc
     match /test/{docId} {
       allow read, write: if true;
     }

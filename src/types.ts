@@ -47,15 +47,6 @@ export interface MPKResponse {
   verifiedOfficial: boolean;
 }
 
-export interface Comment {
-  id: string;
-  author: string;
-  roleOrClass: string;
-  content: string;
-  timestamp: string;
-  likes: number;
-}
-
 export interface Attachment {
   name: string;
   size?: string;
@@ -64,22 +55,30 @@ export interface Attachment {
 }
 
 export interface Aspiration {
-  id: string; // e.g. "MPK-2026-8849"
+  id: string; // e.g. "2026-0001"
+  accessKeyHash: string; // SHA-256 hash of secret access key
+  accessKey?: string; // Cleartext access code (only available at submission confirmation or for authorized admin)
   title: string;
   description: string;
   category: AspirationCategory;
-  authorName: string;
-  className: string;
-  isAnonymous: boolean;
-  supportCount: number;
+  grade?: 'X' | 'XI' | 'XII' | 'none';
+  className: string; // e.g. "XI G" or "Tidak ingin menyebutkan kelas"
   status: AspirationStatus;
   createdAt: string;
   updatedAt: string;
   attachments?: Attachment[];
   mpkResponse?: MPKResponse;
   timeline: TimelineEvent[];
-  comments: Comment[];
-  hasVoted?: boolean;
+  senderProcessNote?: string;
+  adminInternalNotes?: string;
+}
+
+export interface AppStats {
+  total: number;
+  responded: number;
+  inProgress: number;
+  completed: number;
+  updatedAt?: string;
 }
 
 export interface ToastMessage {

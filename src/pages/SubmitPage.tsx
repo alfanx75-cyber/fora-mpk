@@ -1,26 +1,38 @@
 import React, { useState } from 'react';
 import { useAspirations } from '../context/AspirationContext';
-import { CATEGORIES } from '../data/mockData';
+import { CATEGORIES, SCHOOL_CLASSES, SCHOOL_NAME } from '../data/mockData';
 import { AspirationCategory } from '../types';
 import { CategoryIcon } from '../components/CategoryIcon';
-import { CheckCircle2, Paperclip, FileText, Send, Loader2, ShieldCheck } from 'lucide-react';
+import {
+  CheckCircle2,
+  Paperclip,
+  FileText,
+  Send,
+  Loader2,
+  ShieldCheck,
+  Copy,
+  Download,
+  SearchCheck,
+  Lock,
+  AlertCircle
+} from 'lucide-react';
 
 export const SubmitPage: React.FC = () => {
-  const { addAspiration, navigate } = useAspirations();
+  const { submitAspiration, navigate, showToast } = useAspirations();
 
+  // Form Fields
   const [category, setCategory] = useState<AspirationCategory>('fasilitas');
+  const [gradeChoice, setGradeChoice] = useState<'none' | 'X' | 'XI' | 'XII'>('none');
+  const [specificClass, setSpecificClass] = useState<string>('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [isAnonymous, setIsAnonymous] = useState(true);
-  const [name, setName] = useState('');
-  const [className, setClassName] = useState('');
   const [files, setFiles] = useState<{ name: string; size: string; type: string }[]>([]);
   const [isDragging, setIsDragging] = useState(false);
 
-  // Submission lifecycle states
+  // Submission States
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [successTicketId, setSuccessTicketId] = useState<string | null>(null);
-  const [errors, setErrors] = useState<{ title?: string; description?: string }>({});
+  const [successData, setSuccessData] = useState<{ id: string; accessKey: string } | null>(null);
+  const [errors, setErrors] = useState<{ title?: string; description?: string; class?: string }>({});
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -60,7 +72,12 @@ export const SubmitPage: React.FC = () => {
   };
 
   const validate = () => {
-    const errs: { title?: string; description?: string } = {};
+    const errs: { title?: string; description?: string; class?: string } = {};
+
+    if (gradeChoice !== 'none' && !specificClass) {
+      errs.class = `Silakan pilih kelas dari daftar tingkat ${gradeChoice}.`;
+    }
+
     if (!title.trim()) {
       errs.title = 'Judul aspirasi wajib diisi';
     } else if (title.trim().length < 5) {
@@ -77,82 +94,174 @@ export const SubmitPage: React.FC = () => {
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
     setIsSubmitting(true);
 
-    // Simulate authentic network & processing
-    setTimeout(() => {
-      const newAsp = addAspiration({
+    try {
+      const finalClassName = gradeChoice === 'none' ? 'Tidak ingin menyebutkan kelas' : specificClass;
+
+      const result = await submitAspiration({
         title: title.trim(),
         description: description.trim(),
         category,
-        authorName: isAnonymous ? 'Anonim' : (name.trim() || 'Siswa'),
-        className: isAnonymous ? 'Rahasia' : (className.trim() || 'Umum'),
-        isAnonymous,
+        grade: gradeChoice,
+        className: finalClassName,
         attachments: files,
       });
 
       setIsSubmitting(false);
-      setSuccessTicketId(newAsp.id);
-    }, 1000);
+      setSuccessData(result);
+    } catch (err) {
+      setIsSubmitting(false);
+      showToast('Gagal Mengirim', 'Terjadi kendala jaringan saat menyimpan ke database.', undefined, 'error');
+    }
+  };
+
+  // Helper: Salin akses pelacakan
+  const handleCopyAccess = () => {
+    if (!successData) return;
+    const textToCopy = `[BUKTI PENERIMAAN FORA MPK - ${SCHOOL_NAME}]\nNomor Referensi: ${successData.id}\nKode Akses Rahasia: ${successData.accessKey}\n\nSimpan teks ini untuk melacak status aspirasi di menu Lacak Status.`;
+    navigator.clipboard.writeText(textToCopy);
+    showToast('Berhasil Disalin', 'Nomor referensi dan kode akses rahasia disalin ke clipboard.', undefined, 'success');
+  };
+
+  // Helper: Simpan bukti pengiriman (Download file text)
+  const handleSaveReceipt = () => {
+    if (!successData) return;
+    const content = `========================================================\nBUKTI RESMI PENGIRIMAN ASPIRASI - FORA MPK\n${SCHOOL_NAME}\n========================================================\n\nNomor Referensi : ${successData.id}\nKode Akses Rahasia : ${successData.accessKey}\nTanggal Kirim    : ${new Date().toLocaleString('id-ID')}\nKategori         : ${category.toUpperCase()}\nStatus Awal      : DIKIRIM (01)\n\nPERINGATAN PENTING:\nSimpan nomor referensi dan kode akses rahasia ini baik-baik.\nSistem FORA tidak menyimpan nama, nomor kontak, atau email Anda.\nJika kode akses hilang, status tidak dapat dipulihkan secara manual.\n\nLacak status perkembangan aspirasi Anda di:\nMenu "Lacak Status" platform FORA MPK.\n========================================================\n`;
+
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `FORA-Bukti-Aspirasi-${successData.id}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    showToast('Bukti Tersimpan', `Berkas bukti pengiriman ${successData.id} berhasil diunduh.`, undefined, 'success');
+  };
+
+  // Helper: Direct tracking jump
+  const handleGoToTracking = () => {
+    if (!successData) return;
+    // Store in sessionStorage for auto-fill in StatusPage
+    sessionStorage.setItem('fora_last_ticket_id', successData.id);
+    sessionStorage.setItem('fora_last_access_key', successData.accessKey);
+    navigate('/status');
   };
 
   const resetForm = () => {
     setTitle('');
     setDescription('');
-    setName('');
-    setClassName('');
+    setGradeChoice('none');
+    setSpecificClass('');
     setFiles([]);
-    setSuccessTicketId(null);
+    setSuccessData(null);
     setErrors({});
   };
 
   return (
     <div className="w-full max-w-[960px] mx-auto px-4 sm:px-6 md:px-8 py-8 sm:py-12 md:py-16 pb-20 sm:pb-16">
-      {/* Success State Overlay Modal */}
-      {successTicketId && (
-        <div className="fixed inset-0 z-[120] bg-black/65 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-[#FFFFFF] border-[3px] sm:border-[4px] border-[#111111] rounded-3xl p-5 sm:p-8 max-w-md md:max-w-lg w-full text-center shadow-[6px_6px_0px_#111111] sm:shadow-[10px_10px_0px_#111111] animate-[popModal_0.3s_ease-out_forwards] relative overflow-hidden mx-auto my-auto max-h-[92vh] overflow-y-auto">
+      {/* Success State Overlay Modal (Requirement 5) */}
+      {successData && (
+        <div className="fixed inset-0 z-[120] bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-[#FFFFFF] border-[3px] sm:border-[4px] border-[#111111] rounded-3xl p-5 sm:p-8 max-w-lg w-full text-center shadow-[6px_6px_0px_#111111] sm:shadow-[10px_10px_0px_#111111] animate-[popModal_0.3s_ease-out_forwards] relative overflow-hidden mx-auto my-auto max-h-[94vh] overflow-y-auto">
+            {/* Success Icon */}
             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#21D99A] border-[3px] border-[#111111] flex items-center justify-center text-[#111111] mx-auto mb-4 sm:mb-5 shadow-[3px_3px_0px_#111111]">
               <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10" />
             </div>
 
+            {/* Confirmation Headline */}
             <h2 className="font-['Space_Grotesk'] text-2xl sm:text-3xl md:text-4xl font-black text-[#111111] uppercase tracking-tight mb-2">
-              ASPIRASI BERHASIL DIKIRIM
+              Aspirasi Berhasil Dikirim
             </h2>
 
-            <p className="font-['Plus_Jakarta_Sans'] text-xs sm:text-base text-[#111111] font-semibold mb-4 sm:mb-6">
-              Aspirasimu sudah diterima MPK SMANSA dan siap dikawal secara transparan.
+            <p className="font-['Plus_Jakarta_Sans'] text-xs sm:text-sm text-[#111111] font-semibold mb-5 leading-relaxed">
+              Aspirasimu telah tersimpan secara aman. Simpan akses pelacakan berikut untuk mengecek status tindak lanjut komisi MPK.
             </p>
 
-            {/* Ticket Tag Box */}
-            <div className="p-3.5 sm:p-4 bg-[#fde029] border-[2.5px] sm:border-[3px] border-[#111111] rounded-2xl shadow-[3px_3px_0px_#111111] mb-4 sm:mb-6">
-              <span className="font-['Space_Grotesk'] text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#111111] block mb-1">
-                NOMOR TIKET RESMI TRACKING:
-              </span>
-              <span className="font-mono text-xl sm:text-2xl font-black text-[#111111] tracking-wider select-all break-all">
-                {successTicketId}
-              </span>
-              <p className="font-['Plus_Jakarta_Sans'] text-[10px] sm:text-[11px] font-semibold text-[#111111]/80 mt-1">
-                Simpan nomor ini untuk cek progres di menu Lacak Status kapan pun!
-              </p>
+            {/* Secret Credentials Box */}
+            <div className="bg-[#FCFBF5] border-[2.5px] border-[#111111] rounded-2xl p-4 sm:p-5 mb-5 text-left space-y-3 shadow-[3px_3px_0px_#111111]">
+              {/* Reference ID */}
+              <div>
+                <span className="font-['Space_Grotesk'] text-[10px] sm:text-[11px] font-black uppercase text-[#5a3f47] block mb-1">
+                  1. Nomor Referensi (ID Tiket):
+                </span>
+                <div className="p-2 sm:p-2.5 bg-[#FFFFFF] border-[2px] border-[#111111] rounded-xl font-mono text-base sm:text-lg font-black text-[#111111] select-all">
+                  {successData.id}
+                </div>
+              </div>
+
+              {/* Secret Access Key */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-['Space_Grotesk'] text-[10px] sm:text-[11px] font-black uppercase text-[#e01376] flex items-center gap-1">
+                    <Lock className="w-3.5 h-3.5" />
+                    2. Kode Akses Rahasia (PENTING):
+                  </span>
+                  <span className="text-[10px] bg-[#ffd9e1] border border-[#111111] px-1.5 py-0.2 rounded font-bold">
+                    RAHASIA
+                  </span>
+                </div>
+                <div className="p-2 sm:p-2.5 bg-[#fde029] border-[2px] border-[#111111] rounded-xl font-mono text-base sm:text-lg font-black text-[#111111] tracking-wider select-all">
+                  {successData.accessKey}
+                </div>
+              </div>
+
+              {/* Security Notice */}
+              <div className="pt-2 border-t border-[#111111]/20 flex items-start gap-2 text-[11px] text-[#5a3f47] font-medium leading-tight">
+                <AlertCircle className="w-4 h-4 text-[#ba1a1a] shrink-0 mt-0.5" />
+                <span>
+                  Wajib simpan kode akses ini. Karena pengiriman bersifat anonim tanpa nama atau email, kode ini adalah satu-satunya cara untuk melacak aspirasimu.
+                </span>
+              </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 justify-center">
+            {/* Action Buttons Cluster: Salin, Simpan Bukti, Lacak Status */}
+            <div className="flex flex-col gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {/* Button: Salin akses pelacakan */}
+                <button
+                  type="button"
+                  onClick={handleCopyAccess}
+                  className="btn-brutal py-3 px-3 bg-[#FFFFFF] hover:bg-[#f0edec] border-[2px] border-[#111111] rounded-xl font-['Space_Grotesk'] text-xs font-black uppercase shadow-[2px_2px_0px_#111111] flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
+                >
+                  <Copy className="w-4 h-4" />
+                  <span>Salin Akses Pelacakan</span>
+                </button>
+
+                {/* Button: Simpan bukti pengiriman */}
+                <button
+                  type="button"
+                  onClick={handleSaveReceipt}
+                  className="btn-brutal py-3 px-3 bg-[#fde029] hover:bg-[#ffe340] border-[2px] border-[#111111] rounded-xl font-['Space_Grotesk'] text-xs font-black uppercase shadow-[2px_2px_0px_#111111] flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Simpan Bukti Pengiriman</span>
+                </button>
+              </div>
+
+              {/* Button: Lacak status */}
               <button
-                onClick={() => navigate(`/aspirasi/${successTicketId}`)}
-                className="btn-brutal flex-1 py-3 sm:py-3.5 bg-[#e01376] text-white border-[2px] border-[#111111] rounded-xl font-['Space_Grotesk'] text-xs uppercase font-black shadow-[2px_2px_0px_#111111] sm:shadow-[3px_3px_0px_#111111] cursor-pointer min-h-[42px]"
+                type="button"
+                onClick={handleGoToTracking}
+                className="btn-brutal w-full py-3.5 bg-[#e01376] hover:bg-[#b5005d] text-white border-[2.5px] border-[#111111] rounded-xl font-['Space_Grotesk'] text-xs sm:text-sm font-black uppercase shadow-[3px_3px_0px_#111111] flex items-center justify-center gap-2 cursor-pointer min-h-[46px]"
               >
-                LIHAT STATUS ASPIRASI →
+                <SearchCheck className="w-4 h-4" />
+                <span>Lacak Status Sekarang →</span>
               </button>
+
               <button
+                type="button"
                 onClick={resetForm}
-                className="btn-brutal flex-1 py-3 sm:py-3.5 bg-[#FFFFFF] border-[2px] border-[#111111] rounded-xl font-['Space_Grotesk'] text-xs uppercase font-black shadow-[2px_2px_0px_#111111] sm:shadow-[3px_3px_0px_#111111] cursor-pointer min-h-[42px]"
+                className="text-xs font-['Space_Grotesk'] font-bold text-[#5a3f47] hover:underline mt-1 cursor-pointer"
               >
-                KIRIM ASPIRASI LAGI
+                Kirim Aspirasi Baru Lainnya
               </button>
             </div>
           </div>
@@ -162,23 +271,39 @@ export const SubmitPage: React.FC = () => {
       {/* Page Header */}
       <div className="text-center max-w-xl mx-auto mb-8 sm:mb-10">
         <div className="inline-block px-3.5 py-1.5 bg-[#fde029] border-[2px] border-[#111111] rounded-full font-['Space_Grotesk'] text-[10px] sm:text-xs uppercase font-black shadow-[2px_2px_0px_#111111] mb-2 sm:mb-3">
-          FORM RESMI MPK SMANSA
+          RUANG ASPIRASI SISWA · MPK {SCHOOL_NAME}
         </div>
         <h1 className="font-['Space_Grotesk'] text-3xl sm:text-5xl md:text-6xl font-black text-[#111111] uppercase tracking-tight">
-          KIRIM SUARA & ASPIRASI
+          KIRIM ASPIRASI
         </h1>
-        <p className="font-['Plus_Jakarta_Sans'] text-sm sm:text-base md:text-lg text-[#111111] font-semibold mt-1.5 sm:mt-2">
-          Sampaikan keluhan, fasilitas yang perlu dibenahi, ataupun ide baru untuk sekolah kita.
+        <p className="font-['Plus_Jakarta_Sans'] text-xs sm:text-sm md:text-base text-[#111111] font-semibold mt-1.5 sm:mt-2">
+          Sampaikan ide, kritik, fasilitas rusak, atau usulan solusi. Tanpa nama dan terlindungi secara privat.
         </p>
       </div>
 
-      {/* Main Physical Clipboard Poster Card */}
-      <div className="bg-[#FFFFFF] border-[2.5px] sm:border-[3px] border-[#111111] rounded-3xl p-4 sm:p-8 md:p-12 shadow-[5px_5px_0px_#111111] sm:shadow-[8px_8px_0px_#111111] relative">
-        <div className="absolute -top-3.5 sm:-top-4 left-1/2 -translate-x-1/2 w-28 sm:w-32 h-6 sm:h-7 bg-[#ffd9e1] border-[2px] border-[#111111] rounded-md shadow-[2px_2px_0px_#111111] flex items-center justify-center font-['Space_Grotesk'] text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-[#111111]">
-          FORA CLIP
-        </div>
+      {/* Main Brutalist Form Container */}
+      <div className="bg-[#FFFFFF] border-[2.5px] sm:border-[3px] border-[#111111] rounded-3xl p-5 sm:p-8 md:p-12 shadow-[5px_5px_0px_#111111] sm:shadow-[8px_8px_0px_#111111] relative">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Privacy Guarantee Banner */}
+          <div className="p-3.5 sm:p-4 bg-[#FCFBF5] border-[2px] border-[#111111] rounded-2xl flex items-center justify-between gap-3 shadow-[2px_2px_0px_#111111]">
+            <div className="flex items-center gap-2.5">
+              <span className="w-8 h-8 rounded-xl bg-[#21D99A] border border-[#111111] flex items-center justify-center shrink-0 shadow-[1px_1px_0px_#111111]">
+                <ShieldCheck className="w-5 h-5 text-[#111111]" />
+              </span>
+              <div>
+                <span className="font-['Space_Grotesk'] text-xs font-black uppercase text-[#111111] block">
+                  PENGIRIMAN 100% TANPA NAMA
+                </span>
+                <span className="font-['Plus_Jakarta_Sans'] text-[11px] text-[#5a3f47] font-medium block">
+                  Tidak meminta nama, email, atau kontak. Isi kiriman hanya dibaca admin MPK berwenang.
+                </span>
+              </div>
+            </div>
+            <span className="hidden sm:inline-block px-2.5 py-1 bg-[#fde029] border border-[#111111] rounded-lg font-['Space_Grotesk'] text-[10px] font-black uppercase">
+              PRIVAT
+            </span>
+          </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6 pt-2">
           {/* 1. Category Picker */}
           <div>
             <label className="block font-['Space_Grotesk'] text-[11px] sm:text-xs uppercase font-black tracking-wider text-[#111111] mb-2">
@@ -206,11 +331,82 @@ export const SubmitPage: React.FC = () => {
             </div>
           </div>
 
-          {/* 2. Title */}
+          {/* 2. Class Selection (Requirement 6: Tingkat X, XI, XII & Kelas, atau "Tidak ingin menyebutkan kelas") */}
+          <div className="p-4 sm:p-5 bg-[#FCFBF5] border-[2px] border-[#111111] rounded-2xl space-y-3">
+            <label className="block font-['Space_Grotesk'] text-[11px] sm:text-xs uppercase font-black tracking-wider text-[#111111]">
+              2. Asal Kelas (Untuk Pemetaan Internal MPK)
+            </label>
+            <p className="font-['Plus_Jakarta_Sans'] text-[11px] sm:text-xs text-[#5a3f47] leading-relaxed">
+              Pilihan kelas hanya terlihat oleh admin MPK untuk rekapitulasi kebutuhan sarana angkatan dan tidak akan dipublikasikan ke publik.
+            </p>
+
+            {/* Tingkat Radio Buttons */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+              {[
+                { id: 'none', label: 'Tidak ingin menyebutkan kelas' },
+                { id: 'X', label: 'Tingkat X' },
+                { id: 'XI', label: 'Tingkat XI' },
+                { id: 'XII', label: 'Tingkat XII' },
+              ].map(opt => {
+                const active = gradeChoice === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => {
+                      setGradeChoice(opt.id as any);
+                      setSpecificClass('');
+                      if (errors.class) setErrors(prev => ({ ...prev, class: undefined }));
+                    }}
+                    className={`px-3 py-2.5 rounded-xl border-[2px] border-[#111111] font-['Space_Grotesk'] text-[11px] font-bold text-center transition-all cursor-pointer ${
+                      active
+                        ? 'bg-[#fde029] text-[#111111] shadow-[2px_2px_0px_#111111]'
+                        : 'bg-white text-[#5a3f47] hover:bg-[#f0edec]'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Specific Class Dropdown (Required if a grade is picked) */}
+            {gradeChoice !== 'none' && (
+              <div className="pt-2 animate-[popModal_0.2s_ease-out_forwards]">
+                <label className="block font-['Space_Grotesk'] text-[10px] sm:text-[11px] font-bold uppercase text-[#111111] mb-1.5">
+                  Pilih Kelas Resmi di Tingkat {gradeChoice} <span className="text-[#e01376]">*</span>
+                </label>
+                <select
+                  value={specificClass}
+                  onChange={e => {
+                    setSpecificClass(e.target.value);
+                    if (errors.class) setErrors(prev => ({ ...prev, class: undefined }));
+                  }}
+                  className={`w-full bg-[#FFFFFF] border-[2px] sm:border-[2.5px] rounded-xl px-3.5 py-2.5 sm:py-3 font-['Space_Grotesk'] text-xs sm:text-sm font-bold text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#0051d5] shadow-[2px_2px_0px_#111111] ${
+                    errors.class ? 'border-[#ba1a1a] bg-[#ffdad6]/20' : 'border-[#111111]'
+                  }`}
+                >
+                  <option value="">-- Pilih Kelas {gradeChoice} Resmi --</option>
+                  {SCHOOL_CLASSES[gradeChoice].map(cls => (
+                    <option key={cls} value={cls}>
+                      {cls}
+                    </option>
+                  ))}
+                </select>
+                {errors.class && (
+                  <p className="mt-1 font-['Plus_Jakarta_Sans'] text-[11px] font-bold text-[#ba1a1a]">
+                    {errors.class}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* 3. Title */}
           <div>
             <div className="flex items-center justify-between mb-1.5 sm:mb-2">
               <label className="font-['Space_Grotesk'] text-[11px] sm:text-xs uppercase font-black tracking-wider text-[#111111]">
-                2. Judul Aspirasi <span className="text-[#e01376]">*</span>
+                3. Judul Aspirasi <span className="text-[#e01376]">*</span>
               </label>
               <span className="font-['Space_Grotesk'] text-[10px] sm:text-[11px] text-[#5a3f47]">
                 {title.length}/100 Karakter
@@ -236,11 +432,11 @@ export const SubmitPage: React.FC = () => {
             )}
           </div>
 
-          {/* 3. Description */}
+          {/* 4. Description */}
           <div>
             <div className="flex items-center justify-between mb-1.5 sm:mb-2">
               <label className="font-['Space_Grotesk'] text-[11px] sm:text-xs uppercase font-black tracking-wider text-[#111111]">
-                3. Isi Aspirasi & Usulan Solusi <span className="text-[#e01376]">*</span>
+                4. Isi Aspirasi & Usulan Solusi <span className="text-[#e01376]">*</span>
               </label>
               <span className="font-['Space_Grotesk'] text-[10px] sm:text-[11px] text-[#5a3f47]">
                 {description.length} Karakter
@@ -253,7 +449,7 @@ export const SubmitPage: React.FC = () => {
                 setDescription(e.target.value);
                 if (errors.description) setErrors(prev => ({ ...prev, description: undefined }));
               }}
-              placeholder="Ceritakan detail keluhan atau ide solusimu selengkap mungkin. Sebutkan lokasi, waktu kejadian, atau dampak bagi teman-teman sekelas..."
+              placeholder="Ceritakan keluhan atau usulan solusimu selengkap mungkin. Jelaskan lokasi, waktu, atau solusi yang diharapkan..."
               className={`w-full bg-[#FCFBF5] border-[2px] sm:border-[3px] rounded-xl p-3 sm:p-4 font-['Plus_Jakarta_Sans'] text-xs sm:text-sm md:text-base font-medium text-[#111111] placeholder:text-[#5a3f47]/50 focus:outline-none focus:ring-2 focus:ring-[#0051d5] shadow-[2px_2px_0px_#111111] resize-none ${
                 errors.description ? 'border-[#ba1a1a] bg-[#ffdad6]/20' : 'border-[#111111]'
               }`}
@@ -265,10 +461,10 @@ export const SubmitPage: React.FC = () => {
             )}
           </div>
 
-          {/* 4. Drag and Drop File Upload */}
+          {/* 5. Drag and Drop File Upload (Optional) */}
           <div>
             <label className="block font-['Space_Grotesk'] text-[11px] sm:text-xs uppercase font-black tracking-wider text-[#111111] mb-2">
-              4. Lampirkan Foto / Dokumen Pendukung (Opsional)
+              5. Lampiran Bukti Foto / Dokumen Pendukung (Opsional)
             </label>
             <div
               onDragOver={handleDragOver}
@@ -276,7 +472,7 @@ export const SubmitPage: React.FC = () => {
               onDrop={handleDrop}
               className={`border-[2px] sm:border-[3px] border-dashed rounded-2xl p-4 sm:p-6 text-center transition-all cursor-pointer ${
                 isDragging
-                  ? 'border-[#e01376] bg-[#ffd9e1]/40 scale-101'
+                  ? 'border-[#e01376] bg-[#ffd9e1]/40'
                   : 'border-[#111111] bg-[#FCFBF5] hover:bg-[#f0edec]'
               }`}
             >
@@ -330,65 +526,6 @@ export const SubmitPage: React.FC = () => {
             )}
           </div>
 
-          {/* 5. Anonymous Mode Box */}
-          <div className="p-3.5 sm:p-4 bg-[#FCFBF5] border-[2px] border-[#111111] rounded-2xl space-y-2.5 sm:space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 sm:gap-2.5">
-                <input
-                  type="checkbox"
-                  id="anonymous-mode"
-                  checked={isAnonymous}
-                  onChange={e => setIsAnonymous(e.target.checked)}
-                  className="w-4 h-4 sm:w-5 sm:h-5 rounded border-[2px] border-[#111111] text-[#e01376] focus:ring-0 cursor-pointer accent-[#e01376]"
-                />
-                <label
-                  htmlFor="anonymous-mode"
-                  className="font-['Space_Grotesk'] text-xs sm:text-sm font-black uppercase text-[#111111] cursor-pointer select-none"
-                >
-                  Kirim Sebagai Anonim (Disarankan)
-                </label>
-              </div>
-              <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-black uppercase px-2 py-0.5 bg-[#21D99A] border border-[#111111] rounded-md shadow-[1px_1px_0px_#111111]">
-                <ShieldCheck className="w-3 h-3 text-[#111111]" />
-                <span>AMAN</span>
-              </span>
-            </div>
-
-            <p className="font-['Plus_Jakarta_Sans'] text-[11px] sm:text-xs text-[#5a3f47] leading-relaxed">
-              Jika dicentang, nama dan kelas Anda tidak akan dipublikasikan di feed dan hanya dicatat sebagai anonim.
-            </p>
-
-            {/* Conditional Name and Class Inputs */}
-            {!isAnonymous && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-                <div>
-                  <label className="block font-['Space_Grotesk'] text-[10px] sm:text-[11px] font-bold uppercase text-[#111111] mb-1">
-                    Nama Lengkap
-                  </label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                    placeholder="Contoh: Budi Santoso"
-                    className="w-full bg-[#FFFFFF] border-[2px] border-[#111111] rounded-xl px-3 py-2 text-xs font-semibold"
-                  />
-                </div>
-                <div>
-                  <label className="block font-['Space_Grotesk'] text-[10px] sm:text-[11px] font-bold uppercase text-[#111111] mb-1">
-                    Kelas
-                  </label>
-                  <input
-                    type="text"
-                    value={className}
-                    onChange={e => setClassName(e.target.value)}
-                    placeholder="Contoh: XI MIPA 2"
-                    className="w-full bg-[#FFFFFF] border-[2px] border-[#111111] rounded-xl px-3 py-2 text-xs font-semibold"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
           {/* Submit Button */}
           <button
             type="submit"
@@ -398,12 +535,12 @@ export const SubmitPage: React.FC = () => {
             {isSubmitting ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin text-[#111111]" />
-                <span>MPK MENERIMA SUARAMU...</span>
+                <span>MENGIRIM KE DATABASE MPK...</span>
               </>
             ) : (
               <>
                 <Send className="w-4 h-4 text-[#111111]" />
-                <span>KIRIM ASPIRASIKU →</span>
+                <span>KIRIM ASPIRASIKU SEKARANG →</span>
               </>
             )}
           </button>
