@@ -22,7 +22,7 @@ export const TransparencySection: React.FC = () => {
           {/* Step 1 */}
           <div className="card-brutal-hover bg-[#FFFFFF] border-[2.5px] sm:border-[3px] border-[#111111] p-5 sm:p-6 rounded-3xl shadow-[4px_4px_0px_#111111] sm:shadow-[6px_6px_0px_#111111] flex flex-col justify-between">
             <div>
-              <div className="font-['Space_Grotesk'] text-4xl sm:text-5xl md:text-6xl text-[#e01376] font-black leading-none mb-3 sm:mb-4">
+              <div className="font-['Space_Grotesk'] text-4xl sm:text-5xl md:text-6xl text-[#0ea5e9] font-black leading-none mb-3 sm:mb-4">
                 01
               </div>
               <h3 className="font-['Space_Grotesk'] text-lg sm:text-xl font-black uppercase text-[#111111] mb-2">

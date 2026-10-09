@@ -41,7 +41,7 @@ export const ThreeStepsSection: React.FC = () => {
           <div className="mt-6 pt-4 border-t border-[#111111]/20">
             <button
               onClick={() => navigate('/kirim')}
-              className="text-xs font-['Space_Grotesk'] font-bold text-[#e01376] hover:underline cursor-pointer flex items-center gap-1"
+              className="text-xs font-['Space_Grotesk'] font-bold text-[#0ea5e9] hover:underline cursor-pointer flex items-center gap-1"
             >
               Mulai Tulis Sekarang →
             </button>
@@ -55,7 +55,7 @@ export const ThreeStepsSection: React.FC = () => {
               <span className="w-12 h-12 rounded-2xl bg-[#fde029] border-[2px] border-[#111111] flex items-center justify-center text-[#111111] shadow-[2px_2px_0px_#111111]">
                 <KeyRound className="w-6 h-6 text-[#111111]" />
               </span>
-              <span className="font-['Space_Grotesk'] text-xs font-black px-2.5 py-1 bg-[#ffd9e1] border border-[#111111] rounded-lg shadow-[1px_1px_0px_#111111]">
+              <span className="font-['Space_Grotesk'] text-xs font-black px-2.5 py-1 bg-[#e0f2fe] border border-[#111111] rounded-lg shadow-[1px_1px_0px_#111111]">
                 LANGKAH 02
               </span>
             </div>

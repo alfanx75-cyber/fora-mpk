@@ -98,7 +98,7 @@ export const Navbar: React.FC = () => {
             {/* Primary CTA Button: KIRIM ASPIRASI */}
             <button
               onClick={() => handleNav('/kirim')}
-              className="btn-brutal flex items-center gap-1.5 bg-[#e01376] hover:bg-[#b5005d] text-[#FFFFFF] px-3 py-2 sm:px-4 sm:py-2.5 md:px-5 md:py-3 border-[2px] sm:border-[3px] border-[#111111] rounded-xl font-['Space_Grotesk'] text-xs sm:text-sm font-black uppercase tracking-wider shadow-[3px_3px_0px_#111111] sm:shadow-[4px_4px_0px_#111111] cursor-pointer"
+              className="btn-brutal flex items-center gap-1.5 bg-[#0ea5e9] hover:bg-[#0284c7] text-[#FFFFFF] px-3 py-2 sm:px-4 sm:py-2.5 md:px-5 md:py-3 border-[2px] sm:border-[3px] border-[#111111] rounded-xl font-['Space_Grotesk'] text-xs sm:text-sm font-black uppercase tracking-wider shadow-[3px_3px_0px_#111111] sm:shadow-[4px_4px_0px_#111111] cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#fde029]" />
               <span className="hidden xs:inline sm:inline">Kirim Aspirasi</span>
@@ -217,7 +217,7 @@ export const Navbar: React.FC = () => {
 
         <button
           onClick={() => handleNav('/kirim')}
-          className="flex flex-col items-center justify-center py-1 px-3 bg-[#e01376] text-white border-[2px] border-[#111111] rounded-xl shadow-[2px_2px_0px_#111111] -translate-y-1.5 transition-transform active:translate-y-0 cursor-pointer min-h-[44px]"
+          className="flex flex-col items-center justify-center py-1 px-3 bg-[#0ea5e9] hover:bg-[#0284c7] text-white border-[2px] border-[#111111] rounded-xl shadow-[2px_2px_0px_#111111] -translate-y-1.5 transition-transform active:translate-y-0 cursor-pointer min-h-[44px]"
         >
           <span className="material-symbols-outlined text-xl leading-none">add_circle</span>
           <span className="font-['Space_Grotesk'] text-[10px] font-black uppercase mt-0.5">

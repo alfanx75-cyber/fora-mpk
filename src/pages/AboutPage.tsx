@@ -117,9 +117,24 @@ export const AboutPage: React.FC = () => {
           </div>
 
           {/* Kotak Penjelasan Resmi: Ringkas & Padat */}
-          <div className="bg-[#FCFBF5] border border-[#111111] sm:border-[1.5px] rounded-2xl p-3.5 sm:p-4 shadow-[2px_2px_0px_#111111]">
+          <div className="bg-[#FCFBF5] border border-[#111111] sm:border-[1.5px] rounded-2xl p-3.5 sm:p-4 shadow-[2px_2px_0px_#111111] mb-3">
             <p className="font-['Plus_Jakarta_Sans'] text-xs sm:text-sm md:text-[15px] text-[#111111] font-semibold leading-relaxed">
               Website resmi MPK SMA Negeri 1 Kebumen untuk menampung ide, kritik, dan aspirasi siswa SMANSA secara privat, aman, dan langsung ditindaklanjuti ke pihak sekolah demi kemajuan bersama.
+            </p>
+          </div>
+
+          {/* Keterangan Singkat SMANSA KUNCARA: Wujud Nyata Aspirasi */}
+          <div className="bg-[#e0f2fe] border border-[#111111] sm:border-[1.5px] rounded-2xl p-3.5 sm:p-4 shadow-[2px_2px_0px_#111111]">
+            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+              <span className="font-['Space_Grotesk'] text-[10px] sm:text-xs font-black uppercase tracking-wider px-2 py-0.5 bg-[#0ea5e9] text-white border border-[#111111] rounded-md shadow-[1px_1px_0px_#111111]">
+                SMANSA KUNCARA
+              </span>
+              <span className="font-['Space_Grotesk'] text-[11px] font-bold text-[#111111]">
+                Wujud Nyata Semangat Aspirasi Siswa
+              </span>
+            </div>
+            <p className="font-['Plus_Jakarta_Sans'] text-xs sm:text-sm text-[#111111] font-medium leading-relaxed">
+              Mengisi aspirasi merupakan wujud nyata dari slogan <strong>SMANSA KUNCARA</strong>. Setiap ide, kritik, dan solusimu adalah kontribusi aktif menjaga nama harum almamater demi mewujudkan generasi yang cerdas, berkarakter, dan berbudaya.
             </p>
           </div>
         </div>
@@ -243,7 +258,7 @@ export const AboutPage: React.FC = () => {
               <h3 className="font-['Space_Grotesk'] text-xl sm:text-2xl font-black text-[#111111]">
                 {INTI_OFFICERS.ketua.name}
               </h3>
-              <div className="font-['Plus_Jakarta_Sans'] text-xs sm:text-sm font-bold text-[#e01376] mb-1">
+              <div className="font-['Plus_Jakarta_Sans'] text-xs sm:text-sm font-bold text-[#0ea5e9] mb-1">
                 {INTI_OFFICERS.ketua.role} • Kelas {INTI_OFFICERS.ketua.class}
               </div>
               <div className="font-mono text-xs font-bold text-[#5a3f47] mb-3">
@@ -288,7 +303,7 @@ export const AboutPage: React.FC = () => {
               <h3 className="font-['Space_Grotesk'] text-xl sm:text-2xl font-black text-[#111111]">
                 {INTI_OFFICERS.wakilKetua.name}
               </h3>
-              <div className="font-['Plus_Jakarta_Sans'] text-xs sm:text-sm font-bold text-[#e01376] mb-1">
+              <div className="font-['Plus_Jakarta_Sans'] text-xs sm:text-sm font-bold text-[#0ea5e9] mb-1">
                 {INTI_OFFICERS.wakilKetua.role} • Kelas {INTI_OFFICERS.wakilKetua.class}
               </div>
               <div className="font-mono text-xs font-bold text-[#5a3f47] mb-3">
@@ -439,7 +454,7 @@ export const AboutPage: React.FC = () => {
                 <ul className="space-y-1.5 font-['Plus_Jakarta_Sans'] text-xs text-[#111111] font-medium">
                   {kom.tasks.map((task, i) => (
                     <li key={i} className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#e01376] shrink-0 mt-1.5" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#0ea5e9] shrink-0 mt-1.5" />
                       <span>{task}</span>
                     </li>
                   ))}

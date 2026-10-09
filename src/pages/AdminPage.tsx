@@ -231,7 +231,7 @@ export const AdminPage: React.FC = () => {
 
             <button
               type="submit"
-              className="btn-brutal w-full py-3 bg-[#e01376] hover:bg-[#b5005d] text-white border-[2.5px] border-[#111111] rounded-xl font-['Space_Grotesk'] text-xs font-black uppercase tracking-wider shadow-[3px_3px_0px_#111111] cursor-pointer min-h-[46px]"
+              className="btn-brutal w-full py-3 bg-[#0ea5e9] hover:bg-[#0284c7] text-white border-[2.5px] border-[#111111] rounded-xl font-['Space_Grotesk'] text-xs font-black uppercase tracking-wider shadow-[3px_3px_0px_#111111] cursor-pointer min-h-[46px]"
             >
               Masuk Dashboard Admin →
             </button>
@@ -304,7 +304,7 @@ export const AdminPage: React.FC = () => {
       {showCredForm && (
         <div className="bg-[#FFFFFF] border-[2.5px] border-[#111111] rounded-2xl p-5 mb-8 shadow-[4px_4px_0px_#111111] animate-[popModal_0.2s_ease-out_forwards]">
           <h3 className="font-['Space_Grotesk'] text-sm font-black uppercase text-[#111111] mb-3 flex items-center gap-2">
-            <KeyRound className="w-4 h-4 text-[#e01376]" />
+            <KeyRound className="w-4 h-4 text-[#0ea5e9]" />
             Kustomisasi Akun Admin (Tersimpan ke Database Cloud)
           </h3>
           <form onSubmit={handleUpdateCreds} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -483,7 +483,7 @@ export const AdminPage: React.FC = () => {
               {asp.attachments && asp.attachments.length > 0 && (
                 <div className="pt-2 border-t border-[#111111]/15">
                   <div className="flex items-center gap-1.5 mb-1.5">
-                    <span className="w-2 h-2 rounded-full bg-[#e01376]" />
+                    <span className="w-2 h-2 rounded-full bg-[#0ea5e9]" />
                     <span className="text-[11px] font-['Space_Grotesk'] font-black uppercase text-[#111111]">
                       Lampiran Berkas Siswa ({asp.attachments.length}):
                     </span>
@@ -514,7 +514,7 @@ export const AdminPage: React.FC = () => {
                           ) : (
                             <div className="w-8 h-8 rounded-lg bg-[#FCFBF5] border border-[#111111] flex items-center justify-center shrink-0">
                               {isImg ? (
-                                <ImageIcon className="w-4 h-4 text-[#e01376]" />
+                                <ImageIcon className="w-4 h-4 text-[#0ea5e9]" />
                               ) : (
                                 <FileText className="w-4 h-4 text-[#0051d5]" />
                               )}
@@ -711,7 +711,7 @@ export const AdminPage: React.FC = () => {
 
               <div>
                 <label className="block font-['Space_Grotesk'] text-xs font-bold uppercase mb-1">
-                  Pernyataan Resmi: <span className="text-[#e01376]">*</span>
+                  Pernyataan Resmi: <span className="text-[#0ea5e9]">*</span>
                 </label>
                 <textarea
                   rows={3}

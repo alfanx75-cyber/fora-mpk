@@ -106,7 +106,7 @@ export const AttachmentModal: React.FC<AttachmentModalProps> = ({
             </div>
             <div className="overflow-hidden">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-['Space_Grotesk'] text-[10px] sm:text-xs font-black uppercase tracking-wider px-2 py-0.5 bg-[#e01376] text-white rounded-md border border-[#111111]">
+                <span className="font-['Space_Grotesk'] text-[10px] sm:text-xs font-black uppercase tracking-wider px-2 py-0.5 bg-[#0ea5e9] text-white rounded-md border border-[#111111]">
                   {isImg ? 'LAMPIRAN FOTO RESMI' : 'DOKUMEN LAMPIRAN'}
                 </span>
                 {ticketId && (

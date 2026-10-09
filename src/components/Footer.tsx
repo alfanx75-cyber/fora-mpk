@@ -63,7 +63,7 @@ export const Footer: React.FC = () => {
                 <li>
                   <button
                     onClick={() => navigate('/kirim')}
-                    className="hover:underline text-[#e01376] font-bold text-left cursor-pointer"
+                    className="hover:underline text-[#0ea5e9] font-bold text-left cursor-pointer"
                   >
                     + Kirim Aspirasi
                   </button>
@@ -89,7 +89,7 @@ export const Footer: React.FC = () => {
                     onClick={() => setQrModalOpen(true)}
                     className="hover:underline text-[#111111] font-semibold text-left cursor-pointer flex items-center gap-1.5"
                   >
-                    <QrCode className="w-3.5 h-3.5 text-[#e01376]" />
+                    <QrCode className="w-3.5 h-3.5 text-[#0ea5e9]" />
                     <span>QR Code Domain Web</span>
                   </button>
                 </li>

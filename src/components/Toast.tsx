@@ -43,7 +43,7 @@ export const Toast: React.FC = () => {
                   hideToast();
                   navigate(`/aspirasi/${toast.ticketId}`);
                 }}
-                className="ml-1 font-mono font-bold text-[#e01376] underline hover:text-[#0051d5] cursor-pointer"
+                className="ml-1 font-mono font-bold text-[#0ea5e9] underline hover:text-[#0284c7] cursor-pointer"
               >
                 {toast.ticketId}
               </button>
@@ -54,14 +54,14 @@ export const Toast: React.FC = () => {
         <button
           onClick={hideToast}
           aria-label="Tutup Notifikasi"
-          className="ml-auto p-1 text-[#111111] hover:text-[#e01376] transition-colors rounded-lg focus:outline-none cursor-pointer"
+          className="ml-auto p-1 text-[#111111] hover:text-[#0ea5e9] transition-colors rounded-lg focus:outline-none cursor-pointer"
         >
           <span className="material-symbols-outlined text-base sm:text-lg">close</span>
         </button>
       </div>
 
       <div className="w-full bg-[#f0edec] h-1.5 border border-[#111111] rounded-full mt-2 sm:mt-3 overflow-hidden">
-        <div className="h-full bg-[#e01376] w-full animate-[shrinkProgress_3.6s_linear_forwards]" />
+        <div className="h-full bg-[#0ea5e9] w-full animate-[shrinkProgress_3.6s_linear_forwards]" />
       </div>
     </div>
   );

@@ -112,7 +112,7 @@ export const StatusPage: React.FC = () => {
             {/* 1. Reference Ticket ID */}
             <div>
               <label className="block font-['Space_Grotesk'] text-xs uppercase font-black text-[#111111] mb-1.5">
-                Nomor Referensi (ID Tiket) <span className="text-[#e01376]">*</span>
+                Nomor Referensi (ID Tiket) <span className="text-[#0ea5e9]">*</span>
               </label>
               <div className="relative">
                 <input
@@ -128,7 +128,7 @@ export const StatusPage: React.FC = () => {
             {/* 2. Secret Access Key */}
             <div>
               <label className="block font-['Space_Grotesk'] text-xs uppercase font-black text-[#111111] mb-1.5">
-                Kode Akses Rahasia <span className="text-[#e01376]">*</span>
+                Kode Akses Rahasia <span className="text-[#0ea5e9]">*</span>
               </label>
               <div className="relative">
                 <input
@@ -156,7 +156,7 @@ export const StatusPage: React.FC = () => {
             <button
               type="submit"
               disabled={isVerifying}
-              className="btn-brutal w-full py-3.5 bg-[#e01376] hover:bg-[#b5005d] text-white border-[2.5px] border-[#111111] rounded-xl font-['Space_Grotesk'] text-xs sm:text-sm font-black uppercase tracking-wider shadow-[3px_3px_0px_#111111] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 min-h-[48px]"
+              className="btn-brutal w-full py-3.5 bg-[#0ea5e9] hover:bg-[#0284c7] text-white border-[2.5px] border-[#111111] rounded-xl font-['Space_Grotesk'] text-xs sm:text-sm font-black uppercase tracking-wider shadow-[3px_3px_0px_#111111] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 min-h-[48px]"
             >
               {isVerifying ? (
                 <>
@@ -219,7 +219,7 @@ export const StatusPage: React.FC = () => {
           {/* Safe Process Note for Sender (Requirement 5) */}
           <div className="p-4 sm:p-5 bg-[#FCFBF5] border-[2px] border-[#111111] rounded-2xl mb-6 shadow-[2px_2px_0px_#111111]">
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#e01376]" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#0ea5e9]" />
               <span className="font-['Space_Grotesk'] text-xs font-black uppercase text-[#111111]">
                 KETERANGAN PROSES DARI KOMISI MPK:
               </span>
@@ -272,7 +272,7 @@ export const StatusPage: React.FC = () => {
                       ) : (
                         <div className="w-10 h-10 rounded-lg bg-[#FCFBF5] border border-[#111111] flex items-center justify-center shrink-0">
                           {isImg ? (
-                            <ImageIcon className="w-5 h-5 text-[#e01376]" />
+                            <ImageIcon className="w-5 h-5 text-[#0ea5e9]" />
                           ) : (
                             <FileText className="w-5 h-5 text-[#0051d5]" />
                           )}
@@ -327,8 +327,8 @@ export const StatusPage: React.FC = () => {
                         </span>
                         {isCurrent && (
                           <span className="relative flex h-2.5 w-2.5">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#e01376] opacity-75" />
-                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#e01376]" />
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0ea5e9] opacity-75" />
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#0ea5e9]" />
                           </span>
                         )}
                         {isPast && <span className="text-[10px] font-black text-[#00875a]">✓ SELESAI</span>}
@@ -360,7 +360,7 @@ export const StatusPage: React.FC = () => {
                   key={idx}
                   className={`p-3 sm:p-3.5 rounded-xl border-[2px] border-[#111111] flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
                     evt.current
-                      ? 'bg-[#ffd9e1] shadow-[3px_3px_0px_#111111]'
+                      ? 'bg-[#e0f2fe] shadow-[3px_3px_0px_#111111]'
                       : evt.completed
                       ? 'bg-white shadow-[2px_2px_0px_#111111]'
                       : 'bg-[#FCFBF5]/60 opacity-60'
@@ -391,7 +391,7 @@ export const StatusPage: React.FC = () => {
           {trackedAspiration.mpkResponse && trackedAspiration.mpkResponse.statement && (
             <div className="mt-8 p-5 bg-[#fde029]/20 border-[2.5px] border-[#111111] rounded-2xl shadow-[3px_3px_0px_#111111]">
               <div className="flex items-center gap-2 mb-2">
-                <FileCheck className="w-4 h-4 text-[#e01376]" />
+                <FileCheck className="w-4 h-4 text-[#0ea5e9]" />
                 <span className="font-['Space_Grotesk'] text-xs font-black uppercase text-[#111111]">
                   TANGGAPAN RESMI MPK:
                 </span>

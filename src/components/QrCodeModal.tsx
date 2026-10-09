@@ -246,7 +246,7 @@ export const QrCodeModal: React.FC<QrCodeModalProps> = ({
               display: block;
             }
             .slogan {
-              color: #e01376;
+              color: #0ea5e9;
               font-weight: 900;
               font-size: 20px;
               margin-bottom: 8px;
@@ -405,7 +405,7 @@ export const QrCodeModal: React.FC<QrCodeModalProps> = ({
               className={`flex items-center justify-center gap-1.5 px-3 py-2.5 sm:py-3 rounded-xl border-[2px] border-[#111111] font-['Space_Grotesk'] text-xs font-black uppercase tracking-wider shadow-[3px_3px_0px_#111111] cursor-pointer transition-transform active:translate-y-0.5 ${
                 downloadSuccess
                   ? 'bg-[#21D99A] text-[#111111]'
-                  : 'bg-[#e01376] text-white hover:bg-[#b5005d]'
+                  : 'bg-[#0ea5e9] text-white hover:bg-[#0284c7]'
               }`}
             >
               {downloadSuccess ? (

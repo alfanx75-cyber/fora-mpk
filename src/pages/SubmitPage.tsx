@@ -146,7 +146,7 @@ export const SubmitPage: React.FC = () => {
   // Helper: Simpan bukti pengiriman (Download file text)
   const handleSaveReceipt = () => {
     if (!successData) return;
-    const content = `========================================================\nBUKTI RESMI PENGIRIMAN ASPIRASI - FORA MPK\n${SCHOOL_NAME}\n========================================================\n\nNomor Referensi : ${successData.id}\nKode Akses Rahasia : ${successData.accessKey}\nTanggal Kirim    : ${new Date().toLocaleString('id-ID')}\nKategori         : ${category.toUpperCase()}\nStatus Awal      : DIKIRIM (01)\n\nPERINGATAN PENTING:\nSimpan nomor referensi dan kode akses rahasia ini baik-baik.\nSistem FORA tidak menyimpan nama, nomor kontak, atau email Anda.\nJika kode akses hilang, status tidak dapat dipulihkan secara manual.\n\nLacak status perkembangan aspirasi Anda di:\nMenu "Lacak Status" platform FORA MPK.\n========================================================\n`;
+    const content = `========================================================\nBUKTI RESMI PENGIRIMAN ASPIRASI - FORA MPK\n${SCHOOL_NAME}\n========================================================\n\nNomor Referensi    : ${successData.id}\nKode Akses Rahasia : ${successData.accessKey}\nTanggal Kirim      : ${new Date().toLocaleString('id-ID')}\nKategori           : ${category.toUpperCase()}\nStatus Awal        : DIKIRIM (01)\n\nUCAPAN TERIMA KASIH:\nTerima kasih telah mempercayai pihak MPK ${SCHOOL_NAME}.\nAspirasi dan masukan Anda adalah kontribusi nyata demi kemajuan\ndan kebaikan bersama di sekolah kita tercinta.\n\nPERINGATAN PENTING:\nSimpan nomor referensi dan kode akses rahasia ini baik-baik.\nSistem FORA tidak menyimpan nama, nomor kontak, atau email Anda.\nJika kode akses hilang, status tidak dapat dipulihkan secara manual.\n\nLacak status perkembangan aspirasi Anda di:\nMenu "Lacak Status" platform FORA MPK.\n========================================================\n`;
 
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -196,6 +196,19 @@ export const SubmitPage: React.FC = () => {
               Aspirasi Berhasil Dikirim
             </h2>
 
+            {/* Ucapan Terimakasih telah mempercayai pihak MPK */}
+            <div className="bg-[#e0f2fe] border-[2px] sm:border-[2.5px] border-[#111111] rounded-2xl p-3.5 sm:p-4 mb-4 text-center shadow-[3px_3px_0px_#111111]">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-[#FFFFFF] border border-[#111111] rounded-full text-[10px] sm:text-[11px] font-black uppercase text-[#0284c7] mb-1.5 shadow-[1px_1px_0px_#111111]">
+                <span>Apresiasi MPK {SCHOOL_NAME}</span>
+              </div>
+              <p className="font-['Space_Grotesk'] text-sm sm:text-base font-black text-[#0284c7] uppercase tracking-tight">
+                💙 Terima Kasih Telah Mempercayai Pihak MPK!
+              </p>
+              <p className="font-['Plus_Jakarta_Sans'] text-xs sm:text-sm text-[#111111] font-semibold mt-1 leading-relaxed">
+                Suara dan aspirasimu sangat berarti bagi kemajuan sekolah kita bersama. Pengurus MPK berkomitmen untuk meninjau, mengawal, dan menindaklanjutinya dengan penuh integritas dan tanggung jawab.
+              </p>
+            </div>
+
             <p className="font-['Plus_Jakarta_Sans'] text-xs sm:text-sm text-[#111111] font-semibold mb-5 leading-relaxed">
               Aspirasimu telah tersimpan secara aman. Simpan akses pelacakan berikut untuk mengecek status tindak lanjut komisi MPK.
             </p>
@@ -215,11 +228,11 @@ export const SubmitPage: React.FC = () => {
               {/* Secret Access Key */}
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-['Space_Grotesk'] text-[10px] sm:text-[11px] font-black uppercase text-[#e01376] flex items-center gap-1">
+                  <span className="font-['Space_Grotesk'] text-[10px] sm:text-[11px] font-black uppercase text-[#0284c7] flex items-center gap-1">
                     <Lock className="w-3.5 h-3.5" />
                     2. Kode Akses Rahasia (PENTING):
                   </span>
-                  <span className="text-[10px] bg-[#ffd9e1] border border-[#111111] px-1.5 py-0.2 rounded font-bold">
+                  <span className="text-[10px] bg-[#e0f2fe] text-[#0284c7] border border-[#111111] px-1.5 py-0.2 rounded font-black">
                     RAHASIA
                   </span>
                 </div>
@@ -265,7 +278,7 @@ export const SubmitPage: React.FC = () => {
               <button
                 type="button"
                 onClick={handleGoToTracking}
-                className="btn-brutal w-full py-3.5 bg-[#e01376] hover:bg-[#b5005d] text-white border-[2.5px] border-[#111111] rounded-xl font-['Space_Grotesk'] text-xs sm:text-sm font-black uppercase shadow-[3px_3px_0px_#111111] flex items-center justify-center gap-2 cursor-pointer min-h-[46px]"
+                className="btn-brutal w-full py-3.5 bg-[#0ea5e9] hover:bg-[#0284c7] text-white border-[2.5px] border-[#111111] rounded-xl font-['Space_Grotesk'] text-xs sm:text-sm font-black uppercase shadow-[3px_3px_0px_#111111] flex items-center justify-center gap-2 cursor-pointer min-h-[46px]"
               >
                 <SearchCheck className="w-4 h-4" />
                 <span>Lacak Status Sekarang →</span>
@@ -322,7 +335,7 @@ export const SubmitPage: React.FC = () => {
           {/* 1. Category Picker */}
           <div>
             <label className="block font-['Space_Grotesk'] text-[11px] sm:text-xs uppercase font-black tracking-wider text-[#111111] mb-2">
-              1. Pilih Kategori Aspirasi <span className="text-[#e01376]">*</span>
+              1. Pilih Kategori Aspirasi <span className="text-[#0ea5e9]">*</span>
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
               {CATEGORIES.map(cat => {
@@ -334,7 +347,7 @@ export const SubmitPage: React.FC = () => {
                     onClick={() => setCategory(cat.id)}
                     className={`p-2.5 sm:p-3 rounded-2xl border-[2px] border-[#111111] font-['Space_Grotesk'] text-[11px] sm:text-xs font-bold flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-[#111111] text-white shadow-[2px_2px_0px_#e01376] scale-102'
+                        ? 'bg-[#111111] text-white shadow-[2px_2px_0px_#0ea5e9] scale-102'
                         : 'bg-[#FCFBF5] text-[#111111] hover:bg-[#f0edec] shadow-[1.5px_1.5px_0px_#111111]'
                     }`}
                   >
@@ -389,7 +402,7 @@ export const SubmitPage: React.FC = () => {
             {gradeChoice !== 'none' && (
               <div className="pt-2 animate-[popModal_0.2s_ease-out_forwards]">
                 <label className="block font-['Space_Grotesk'] text-[10px] sm:text-[11px] font-bold uppercase text-[#111111] mb-1.5">
-                  Pilih Kelas Resmi di Tingkat {gradeChoice} <span className="text-[#e01376]">*</span>
+                  Pilih Kelas Resmi di Tingkat {gradeChoice} <span className="text-[#0ea5e9]">*</span>
                 </label>
                 <select
                   value={specificClass}
@@ -421,7 +434,7 @@ export const SubmitPage: React.FC = () => {
           <div>
             <div className="flex items-center justify-between mb-1.5 sm:mb-2">
               <label className="font-['Space_Grotesk'] text-[11px] sm:text-xs uppercase font-black tracking-wider text-[#111111]">
-                3. Judul Aspirasi <span className="text-[#e01376]">*</span>
+                3. Judul Aspirasi <span className="text-[#0ea5e9]">*</span>
               </label>
               <span className="font-['Space_Grotesk'] text-[10px] sm:text-[11px] text-[#5a3f47]">
                 {title.length}/100 Karakter
@@ -451,7 +464,7 @@ export const SubmitPage: React.FC = () => {
           <div>
             <div className="flex items-center justify-between mb-1.5 sm:mb-2">
               <label className="font-['Space_Grotesk'] text-[11px] sm:text-xs uppercase font-black tracking-wider text-[#111111]">
-                4. Isi Aspirasi & Usulan Solusi <span className="text-[#e01376]">*</span>
+                4. Isi Aspirasi & Usulan Solusi <span className="text-[#0ea5e9]">*</span>
               </label>
               <span className="font-['Space_Grotesk'] text-[10px] sm:text-[11px] text-[#5a3f47]">
                 {description.length} Karakter
@@ -487,7 +500,7 @@ export const SubmitPage: React.FC = () => {
               onDrop={handleDrop}
               className={`border-[2px] sm:border-[3px] border-dashed rounded-2xl p-4 sm:p-6 text-center transition-all cursor-pointer ${
                 isDragging
-                  ? 'border-[#e01376] bg-[#ffd9e1]/40'
+                  ? 'border-[#0ea5e9] bg-[#e0f2fe]/40'
                   : 'border-[#111111] bg-[#FCFBF5] hover:bg-[#f0edec]'
               }`}
             >
