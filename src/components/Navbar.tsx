@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useAspirations } from '../context/AspirationContext';
 import { MPK_LOGO, SCHOOL_NAME } from '../data/mockData';
-import { Shield, Sparkles } from 'lucide-react';
+import { Shield, Sparkles, QrCode } from 'lucide-react';
+import { QrCodeModal } from './QrCodeModal';
 
 export const Navbar: React.FC = () => {
   const { currentRoute, navigate, stats, isAdmin } = useAspirations();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [qrModalOpen, setQrModalOpen] = useState(false);
 
   const navLinks = [
     { label: 'Beranda', path: '/', icon: 'home' },
@@ -103,6 +105,16 @@ export const Navbar: React.FC = () => {
               <span className="inline xs:hidden sm:hidden">Kirim</span>
             </button>
 
+            {/* Direct QR Code Action */}
+            <button
+              onClick={() => setQrModalOpen(true)}
+              title="QR Code Langsung Web FORA"
+              className="hidden lg:flex items-center gap-1.5 px-3 py-2 sm:py-2.5 bg-[#fde029] hover:bg-[#ebd024] text-[#111111] border-[2px] sm:border-[2.5px] border-[#111111] rounded-xl font-['Space_Grotesk'] text-xs font-black uppercase shadow-[2px_2px_0px_#111111] cursor-pointer transition-colors"
+            >
+              <QrCode className="w-3.5 h-3.5 text-[#111111]" />
+              <span>QR Web</span>
+            </button>
+
             {/* Quick Admin MPK Button */}
             <button
               onClick={() => handleNav('/admin')}
@@ -152,6 +164,18 @@ export const Navbar: React.FC = () => {
                 );
               })}
 
+              {/* QR Code Action in Mobile Drawer */}
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setQrModalOpen(true);
+                }}
+                className="w-full text-left px-4 py-3 rounded-xl font-['Space_Grotesk'] text-sm font-extrabold uppercase tracking-wider border-[2px] border-[#111111] bg-[#fde029] text-[#111111] shadow-[2px_2px_0px_#111111] transition-all cursor-pointer flex items-center gap-2.5 min-h-[44px]"
+              >
+                <QrCode className="w-4 h-4 text-[#111111]" />
+                <span>Buka QR Code Web</span>
+              </button>
+
               {/* Admin MPK Link in Drawer */}
               <button
                 onClick={() => handleNav('/admin')}
@@ -168,6 +192,9 @@ export const Navbar: React.FC = () => {
           </div>
         )}
       </header>
+
+      {/* QR Code Modal Dialog */}
+      <QrCodeModal isOpen={qrModalOpen} onClose={() => setQrModalOpen(false)} />
 
       {/* Floating Bottom Navigation Bar for Mobile Phones (< md) */}
       <nav

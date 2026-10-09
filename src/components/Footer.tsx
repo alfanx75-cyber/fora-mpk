@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useAspirations } from '../context/AspirationContext';
 import { MPK_INSTAGRAM_URL, MPK_INSTAGRAM_HANDLE, MPK_EMAIL, SCHOOL_LOGO, SCHOOL_NAME } from '../data/mockData';
-import { Mail, Shield } from 'lucide-react';
+import { Mail, Shield, QrCode } from 'lucide-react';
+import { QrCodeModal } from './QrCodeModal';
 
 export const Footer: React.FC = () => {
   const { navigate } = useAspirations();
   const [modalType, setModalType] = useState<'privacy' | 'ethics' | null>(null);
+  const [qrModalOpen, setQrModalOpen] = useState(false);
 
   return (
     <>
@@ -80,6 +82,15 @@ export const Footer: React.FC = () => {
                     className="hover:underline text-[#111111] font-semibold text-left cursor-pointer"
                   >
                     Tentang MPK
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => setQrModalOpen(true)}
+                    className="hover:underline text-[#111111] font-semibold text-left cursor-pointer flex items-center gap-1.5"
+                  >
+                    <QrCode className="w-3.5 h-3.5 text-[#e01376]" />
+                    <span>QR Code Domain Web</span>
                   </button>
                 </li>
                 <li>
@@ -206,6 +217,9 @@ export const Footer: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Direct QR Code Modal */}
+      <QrCodeModal isOpen={qrModalOpen} onClose={() => setQrModalOpen(false)} />
     </>
   );
 };

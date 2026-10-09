@@ -9,6 +9,7 @@ export const MPK_INSTAGRAM_URL = "https://www.instagram.com/mpk_sman1kebumen?stk
 export const MPK_INSTAGRAM_HANDLE = "@mpk_sman1kebumen";
 export const SMANSA_OFFICIAL_INSTAGRAM_URL = "https://www.instagram.com/official.sman1kebumen?rpxt=N2ZyOTQ5ZjR6NGtl";
 export const MPK_EMAIL = "mpksmanegeri1kebumen@gmail.com";
+export const FORA_DOMAIN = "https://fora-mpk.vercel.app/";
 
 // Official class list for SMA Negeri 1 Kebumen
 export const SCHOOL_CLASSES = {

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { MPK_MEMBERS, FAQS, INTI_OFFICERS, MPK_INSTAGRAM_URL, MPK_INSTAGRAM_HANDLE, SCHOOL_LOGO, SCHOOL_NAME, SCHOOL_SHORT, MPK_EMAIL, SMANSA_OFFICIAL_INSTAGRAM_URL } from '../data/mockData';
+import { FAQS, INTI_OFFICERS, MPK_INSTAGRAM_URL, MPK_INSTAGRAM_HANDLE, SCHOOL_LOGO, SCHOOL_NAME, SCHOOL_SHORT, MPK_EMAIL, SMANSA_OFFICIAL_INSTAGRAM_URL } from '../data/mockData';
 import { useAspirations } from '../context/AspirationContext';
 import { FileText, ShieldCheck, MessageSquare, Search, Share2, HelpCircle, Phone, Instagram, Send, CheckCircle2, Building2, ExternalLink } from 'lucide-react';
 
 export const AboutPage: React.FC = () => {
-  const { navigate, showToast } = useAspirations();
+  const { navigate } = useAspirations();
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
   const toggleFaq = (index: number) => {
@@ -444,66 +444,6 @@ export const AboutPage: React.FC = () => {
                     </li>
                   ))}
                 </ul>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* LEADERSHIP SHOWCASE (Ketua Komisi) */}
-      <div className="mb-14 sm:mb-20">
-        <div className="mb-6 sm:mb-8">
-          <div className="inline-block px-3 py-1 bg-[#ffd9e1] border-[2px] border-[#111111] rounded-lg font-['Space_Grotesk'] text-[10px] sm:text-xs uppercase font-black shadow-[2px_2px_0px_#111111] mb-2">
-            KETUA-KETUA KOMISI
-          </div>
-          <h2 className="font-['Space_Grotesk'] text-2xl sm:text-3xl md:text-4xl font-black text-[#111111] uppercase tracking-tight">
-            PIMPINAN KOMISI 1 – 5
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {MPK_MEMBERS.filter(m => m.division !== 'INTI (BPH)').map(member => (
-            <div
-              key={member.name}
-              className="card-brutal-hover bg-[#FFFFFF] border-[2.5px] sm:border-[3px] border-[#111111] rounded-3xl p-5 sm:p-6 shadow-[4px_4px_0px_#111111] sm:shadow-[6px_6px_0px_#111111] flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-center justify-between mb-3 sm:mb-4">
-                  <span className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-[#FCFBF5] border-[2px] border-[#111111] flex items-center justify-center font-['Space_Grotesk'] font-black text-sm sm:text-base text-[#111111] shadow-[2px_2px_0px_#111111]">
-                    {member.avatar}
-                  </span>
-                  <span
-                    className="px-2.5 sm:px-3 py-1 border-[1.5px] sm:border-[2px] border-[#111111] rounded-xl font-['Space_Grotesk'] text-[9px] sm:text-[10px] font-black uppercase shadow-[1.5px_1.5px_0px_#111111]"
-                    style={{ backgroundColor: member.badgeBg }}
-                  >
-                    {member.badge}
-                  </span>
-                </div>
-
-                <h4 className="font-['Space_Grotesk'] text-lg sm:text-xl font-black text-[#111111]">
-                  {member.name}
-                </h4>
-                <div className="font-['Plus_Jakarta_Sans'] text-xs font-bold text-[#5a3f47] mb-3">
-                  {member.role} • {member.class}
-                </div>
-
-                <div className="bg-[#FCFBF5] border border-[#111111] rounded-xl p-3 shadow-[1.5px_1.5px_0px_#111111]">
-                  <p className="font-['Plus_Jakarta_Sans'] text-xs text-[#111111] italic font-medium leading-relaxed">
-                    “{member.quote}”
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-5 pt-3 border-t border-[#111111] flex items-center justify-between">
-                <span className="font-['Space_Grotesk'] text-[10px] sm:text-[11px] font-bold text-[#5a3f47]">
-                  {member.division} SMANSA
-                </span>
-                <button
-                  onClick={() => showToast('Kontak Komisi', `Sampaikan aspirasimu ke ${member.role}.`)}
-                  className="btn-brutal text-xs font-['Space_Grotesk'] font-bold text-[#e01376] hover:underline cursor-pointer"
-                >
-                  Hubungi →
-                </button>
               </div>
             </div>
           ))}

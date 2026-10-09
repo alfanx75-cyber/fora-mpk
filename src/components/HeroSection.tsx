@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAspirations } from '../context/AspirationContext';
 import { SCHOOL_LOGO, SCHOOL_NAME } from '../data/mockData';
-import { ShieldCheck, ArrowRight, SearchCheck } from 'lucide-react';
+import { ShieldCheck, ArrowRight, SearchCheck, QrCode } from 'lucide-react';
+import { QrCodeModal } from './QrCodeModal';
 
 export const HeroSection: React.FC = () => {
   const { navigate } = useAspirations();
+  const [qrModalOpen, setQrModalOpen] = useState(false);
 
   return (
     <section className="relative w-full max-w-[1360px] mx-auto px-4 sm:px-6 md:px-8 pt-8 sm:pt-14 md:pt-20 pb-12 sm:pb-16 md:pb-20">
@@ -49,6 +51,16 @@ export const HeroSection: React.FC = () => {
             <SearchCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#316bf3]" />
             <span>Lacak Status</span>
           </button>
+
+          {/* Direct QR Code Action */}
+          <button
+            onClick={() => setQrModalOpen(true)}
+            className="btn-brutal flex items-center justify-center gap-2 bg-[#fde029] hover:bg-[#ebd024] text-[#111111] px-4 sm:px-5 py-3.5 sm:py-4.5 border-[2.5px] sm:border-[3px] border-[#111111] rounded-2xl font-['Space_Grotesk'] text-sm sm:text-base font-extrabold uppercase tracking-wider shadow-[3px_3px_0px_#111111] sm:shadow-[4px_4px_0px_#111111] cursor-pointer min-h-[50px]"
+            title="Tampilkan QR Code langsung untuk scan dan bagikan"
+          >
+            <QrCode className="w-4 h-4 sm:w-5 sm:h-5 text-[#111111]" />
+            <span>QR Code Web</span>
+          </button>
         </div>
 
         {/* 5. Short Privacy Note */}
@@ -59,6 +71,9 @@ export const HeroSection: React.FC = () => {
           </p>
         </div>
       </div>
+
+      {/* QR Code Direct Modal */}
+      <QrCodeModal isOpen={qrModalOpen} onClose={() => setQrModalOpen(false)} />
     </section>
   );
 };

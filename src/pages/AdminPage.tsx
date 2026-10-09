@@ -22,8 +22,10 @@ import {
   UserCheck,
   ChevronDown,
   Eye,
-  Image as ImageIcon
+  Image as ImageIcon,
+  QrCode
 } from 'lucide-react';
+import { QrCodeModal } from '../components/QrCodeModal';
 
 export const AdminPage: React.FC = () => {
   const {
@@ -49,6 +51,9 @@ export const AdminPage: React.FC = () => {
   const [newUsername, setNewUsername] = useState(adminCredentials.username);
   const [newPassword, setNewPassword] = useState('');
   const [isUpdatingCreds, setIsUpdatingCreds] = useState(false);
+
+  // QR Code Modal
+  const [qrModalOpen, setQrModalOpen] = useState(false);
 
   // Filters
   const [filterCategory, setFilterCategory] = useState('all');
@@ -270,6 +275,14 @@ export const AdminPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            onClick={() => setQrModalOpen(true)}
+            className="btn-brutal flex items-center gap-1.5 px-3.5 py-2 bg-[#21D99A] hover:bg-[#1bc189] text-[#111111] border-[2px] border-[#111111] rounded-xl font-['Space_Grotesk'] text-xs font-bold uppercase shadow-[2px_2px_0px_#111111] cursor-pointer"
+            title="Buka QR Code untuk disebarkan ke siswa atau dicetak"
+          >
+            <QrCode className="w-3.5 h-3.5" />
+            <span>QR Code Web</span>
+          </button>
           <button
             onClick={() => setShowCredForm(prev => !prev)}
             className="btn-brutal flex items-center gap-1.5 px-3.5 py-2 bg-[#fde029] border-[2px] border-[#111111] rounded-xl font-['Space_Grotesk'] text-xs font-bold uppercase shadow-[2px_2px_0px_#111111] cursor-pointer"
@@ -748,6 +761,9 @@ export const AdminPage: React.FC = () => {
         ticketTitle={viewAttachment?.ticketTitle}
         onClose={() => setViewAttachment(null)}
       />
+
+      {/* Direct QR Code Modal */}
+      <QrCodeModal isOpen={qrModalOpen} onClose={() => setQrModalOpen(false)} />
     </div>
   );
 };
